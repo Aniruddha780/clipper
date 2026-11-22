@@ -1,8 +1,6 @@
 import React from 'react';
-import { Sparkles, Zap, Globe, FileVideo, Subtitles, Youtube, Instagram, Shield, Github, ArrowRight, Check, ChevronDown, Monitor, Cpu, Languages, Type, Upload, Scissors, Link2, Bot } from 'lucide-react';
-import PricingSection from './components/PricingSection';
+import { Sparkles, Zap, Globe, FileVideo, Subtitles, Youtube, Instagram, Shield, ArrowRight, Check, ChevronDown, Monitor, Languages, Type, Upload, Scissors, Link2, Bot } from 'lucide-react';
 import SiteNav from './components/SiteNav';
-import { useAuth } from './contexts/AuthContext';
 import './landing.css';
 
 const APPARATUS_CALLOUTS = ['RATIO · 9:16', 'CLIPS · 3–15', 'HOOK · AUTO', 'SUBS · WORD-LEVEL'];
@@ -72,7 +70,7 @@ const DEMOS = [
 
 const SectionHeader = ({ eyebrow, title, children }) => (
   <div className="mb-12">
-    <p className="eyebrow mb-3">{eyebrow}</p>
+    {eyebrow && <p className="eyebrow mb-3 text-brass opacity-100">{eyebrow}</p>}
     <h2 className="font-display text-3xl md:text-4xl lowercase text-ink tracking-tight mb-4">{title}</h2>
     {children && <p className="text-muted max-w-2xl leading-relaxed">{children}</p>}
   </div>
@@ -85,7 +83,7 @@ const SHOWCASE = [
     id: 'moments', tab: 'finds the moments',
     title: 'every clip scored before you see it',
     body: 'Gemini reads the word-level transcript and the scene cuts, scores each moment out of 100, and writes the title and the description for every platform.',
-    media: { type: 'img', src: '/screens/app-clipcard.webp', w: 1153, h: 441, alt: 'A clip in OpenShorts with its viral score, titles and edit actions' },
+    media: { type: 'img', src: '/screens/app-clipcard.webp', w: 1153, h: 441, alt: 'A clip in Clipper with its viral score, titles and edit actions' },
   },
   {
     id: 'reframe', tab: 'reframes any layout',
@@ -109,7 +107,7 @@ const SHOWCASE = [
     id: 'editor', tab: 'a real editor',
     title: 'fix anything, down to the word',
     body: 'Source and program monitors side by side with the full transcript: click a word to set a cut, add segments, change the framing, re-render in seconds.',
-    media: { type: 'img', src: '/screens/app-editor.webp', w: 1568, h: 652, alt: 'The OpenShorts clip editor with source monitor, program monitor, transcript and segments' },
+    media: { type: 'img', src: '/screens/app-editor.webp', w: 1568, h: 652, alt: 'The Clipper clip editor with source monitor, program monitor, transcript and segments' },
   },
   {
     id: 'autopilot', tab: 'autopilot',
@@ -251,7 +249,7 @@ const FAQItem = ({ question, answer, isOpen, onClick }) => (
 
 // Internal links to the per-platform pages. The same links, in the same order,
 // are in seo/landing-fallback.js so they exist in the static HTML too.
-const LINK = 'text-ink2 underline underline-offset-2 hover:text-ink transition-colors';
+const LINK = 'text-brass underline underline-offset-2 hover:opacity-80 transition-colors';
 
 // The hero names where the user's own long video lives. TikTok is a place
 // the clips go to, so its page is linked from PLATFORMS and the footer.
@@ -375,7 +373,6 @@ function useSmoothSectionLinks() {
 export default function Landing({ onLaunchApp }) {
   useScrollToHashSection();
   useSmoothSectionLinks();
-  const { billingEnabled } = useAuth();
   const [openFaq, setOpenFaq] = React.useState(null);
   // Start from whatever was typed into the static paste box of the crawler
   // fallback (seo/landing-fallback.js) before this component mounted: the
@@ -513,20 +510,20 @@ export default function Landing({ onLaunchApp }) {
       answer: "OpenShorts is an open source AI clip generator (free to self-host under MIT, Cloud plans from $12/month) that transforms your long-form videos — podcasts, webinars, livestreams, vlogs, interviews — into viral-ready short clips in 9:16 vertical format. It uses a multi-step AI pipeline: faster-whisper for transcription with word-level timestamps, PySceneDetect for scene boundary detection, and Google Gemini 3.1 Flash-Lite AI for identifying the most engaging viral moments. According to HubSpot's 2025 State of Marketing report, short-form video delivers the highest ROI of any content format, and repurposing long-form content into shorts increases total reach by up to 300%."
     },
     {
-      question: "How does OpenShorts compare to Opus Clip?",
-      answer: "OpenShorts is an open source alternative to Opus Clip. Both offer AI viral moment detection and smart vertical cropping. Key differences: OpenShorts is free when self-hosted and $12/month hosted, against Opus Clip from $15/month billed per source minute. OpenShorts can run on your own infrastructure (full data privacy); Opus Clip is cloud-only. OpenShorts uses Google Gemini 3.1 Flash-Lite for AI analysis vs Opus Clip's proprietary model. OpenShorts adds two-speaker and screencast layouts, AI UGC videos with lip-synced actors, and an MCP server for Claude and ChatGPT. The honest trade-off: Opus Clip has the larger caption-style library."
+      question: "How does Clipper compare to Opus Clip?",
+      answer: "Clipper is an open source alternative to Opus Clip. Both offer AI viral moment detection and smart vertical cropping. Key differences: Clipper is free when self-hosted and $12/month hosted, against Opus Clip from $15/month billed per source minute. Clipper can run on your own infrastructure (full data privacy); Opus Clip is cloud-only. Clipper uses Google Gemini 3.1 Flash-Lite for AI analysis vs Opus Clip's proprietary model. Clipper adds two-speaker and screencast layouts, AI UGC videos with lip-synced actors, and an MCP server for Claude and ChatGPT. The honest trade-off: Opus Clip has the larger caption-style library."
     },
     {
       question: "How do I turn a long-form video into TikTok or Reels clips?",
-      answer: "Upload your long-form video into OpenShorts, enter your free Gemini API key, and click Process. The AI transcribes it with faster-whisper, detects the best viral moments using Google Gemini 3.1 Flash-Lite, and crops them to 9:16 vertical format with MediaPipe face tracking. According to Wyzowl's 2025 Video Marketing Statistics report, 91% of businesses use video as a marketing tool, and repurposed short-form clips drive 2.5x more engagement than original content."
+      answer: "Upload your long-form video into Clipper, enter your free Gemini API key, and click Process. The AI transcribes it with faster-whisper, detects the best viral moments using Google Gemini 3.1 Flash-Lite, and crops them to 9:16 vertical format with MediaPipe face tracking. According to Wyzowl's 2025 Video Marketing Statistics report, 91% of businesses use video as a marketing tool, and repurposed short-form clips drive 2.5x more engagement than original content."
     },
     {
-      question: "Can OpenShorts generate YouTube thumbnails and titles for free?",
-      answer: "Yes. OpenShorts includes a free AI YouTube thumbnail generator, a free AI YouTube title generator, and a free AI YouTube description generator — all powered by Google Gemini 3.1 Flash-Lite. Upload your video and the AI suggests 10 viral title options with an interactive refinement chat. Then it generates multiple thumbnail designs using AI image generation — upload a face photo and background image for personalized results. The studio also auto-generates YouTube descriptions with chapter timestamps and lets you publish directly to YouTube. Everything is 100% free with the Gemini free tier."
+      question: "Can Clipper generate YouTube thumbnails and titles for free?",
+      answer: "Yes. Clipper includes a free AI YouTube thumbnail generator, a free AI YouTube title generator, and a free AI YouTube description generator — all powered by Google Gemini 3.1 Flash-Lite. Upload your video and the AI suggests 10 viral title options with an interactive refinement chat. Then it generates multiple thumbnail designs using AI image generation — upload a face photo and background image for personalized results. The studio also auto-generates YouTube descriptions with chapter timestamps and lets you publish directly to YouTube. Everything is 100% free with the Gemini free tier."
     },
     {
       question: "What is the AI UGC Video Generator?",
-      answer: "OpenShorts includes an AI UGC (User Generated Content) video creator that generates marketing videos with AI actors for any product or business. You describe your product or paste a website URL — the AI writes a viral script, generates a realistic AI actor with lip-synced voiceover, adds b-roll visuals and TikTok-style subtitles, with the hook spoken in the first seconds. The result is a ready-to-post vertical video for TikTok, Instagram Reels, or YouTube Shorts. Two cost modes: Low Cost (~$0.65/video using Hailuo + VEED Lipsync) and Premium (~$2/video using Kling Avatar v2)."
+      answer: "Clipper includes an AI UGC (User Generated Content) video creator that generates marketing videos with AI actors for any product or business. You describe your product or paste a website URL — the AI writes a viral script, generates a realistic AI actor with lip-synced voiceover, adds b-roll visuals and TikTok-style subtitles, with the hook spoken in the first seconds. The result is a ready-to-post vertical video for TikTok, Instagram Reels, or YouTube Shorts. Two cost modes: Low Cost (~$0.65/video using Hailuo + VEED Lipsync) and Premium (~$2/video using Kling Avatar v2)."
     },
     {
       question: "Can I use the AI UGC Video Generator for any type of business?",
@@ -534,37 +531,36 @@ export default function Landing({ onLaunchApp }) {
     },
     {
       question: "How much does it cost to generate an AI UGC video?",
-      answer: "OpenShorts itself is free, but the AI Shorts feature uses external APIs (fal.ai for video generation, ElevenLabs for voiceover) that charge per use. Low Cost mode costs approximately $0.65 per video (Flux image $0.05 + ElevenLabs voice $0.10 + Hailuo img2video $0.19 + VEED Lipsync $0.20 + b-roll $0.10). Premium mode costs approximately $2.00 per video using Kling Avatar v2 for higher quality. Both modes are significantly cheaper than hiring UGC creators ($50-500 per video) or using platforms like HeyGen ($24-180/month)."
+      answer: "Clipper itself is free, but the AI Shorts feature uses external APIs (fal.ai for video generation, ElevenLabs for voiceover) that charge per use. Low Cost mode costs approximately $0.65 per video (Flux image $0.05 + ElevenLabs voice $0.10 + Hailuo img2video $0.19 + VEED Lipsync $0.20 + b-roll $0.10). Premium mode costs approximately $2.00 per video using Kling Avatar v2 for higher quality. Both modes are significantly cheaper than hiring UGC creators ($50-500 per video) or using platforms like HeyGen ($24-180/month)."
     },
     {
-      question: "What AI does OpenShorts use for viral moment detection?",
-      answer: "OpenShorts uses Google Gemini 3.1 Flash-Lite, Google's latest multimodal AI model, for viral moment detection and title generation. The AI receives the full video transcript with timestamps, scene boundary data from PySceneDetect, and analyzes engagement patterns to identify the 3-15 most shareable moments. Each clip is scored based on emotional impact, hook strength, and viral potential — similar to how platforms like TikTok and YouTube rank content."
+      question: "What AI does Clipper use for viral moment detection?",
+      answer: "Clipper uses Google Gemini 3.1 Flash-Lite, Google's latest multimodal AI model, for viral moment detection and title generation. The AI receives the full video transcript with timestamps, scene boundary data from PySceneDetect, and analyzes engagement patterns to identify the 3-15 most shareable moments. Each clip is scored based on emotional impact, hook strength, and viral potential — similar to how platforms like TikTok and YouTube rank content."
     },
     {
-      question: "Can OpenShorts translate and dub videos into other languages?",
-      answer: "Yes, with your own ElevenLabs API key, both in the cloud and self-hosted: add the key in Settings and a clip is dubbed into any of 30+ languages while keeping the original speaker's voice. After dubbing, OpenShorts re-transcribes the new audio and burns subtitles in the target language. ElevenLabs bills the dubbing to your key; it is not included in the OpenShorts plans."
+      question: "Can Clipper translate and dub videos into other languages?",
+      answer: "Yes, with your own ElevenLabs API key, both in the cloud and self-hosted: add the key in Settings and a clip is dubbed into any of 30+ languages while keeping the original speaker's voice. After dubbing, Clipper re-transcribes the new audio and burns subtitles in the target language. ElevenLabs bills the dubbing to your key; it is not included in the Clipper plans."
     },
     {
       question: "How does the smart vertical cropping work?",
-      answer: "OpenShorts offers two intelligent cropping modes for converting 16:9 horizontal video to 9:16 vertical format. TRACK mode uses MediaPipe face detection with YOLOv8 as fallback to follow a single subject with 'Heavy Tripod' stabilization — the camera moves smoothly like a professional cameraman. GENERAL mode handles group shots and landscapes by creating a blurred background layout. A SpeakerTracker prevents rapid switching between subjects and handles temporary occlusions for smooth results."
+      answer: "Clipper offers two intelligent cropping modes for converting 16:9 horizontal video to 9:16 vertical format. TRACK mode uses MediaPipe face detection with YOLOv8 as fallback to follow a single subject with 'Heavy Tripod' stabilization — the camera moves smoothly like a professional cameraman. GENERAL mode handles group shots and landscapes by creating a blurred background layout. A SpeakerTracker prevents rapid switching between subjects and handles temporary occlusions for smooth results."
     },
     {
       question: "Is there a free open source clip generator?",
-      answer: "Yes. OpenShorts is an open source clip generator (also known as open source clipping software or an AI video clipper) under the MIT licence. Self-hosted, it generates unlimited clips with no watermarks, no usage limits and no subscription fees. OpenShorts Cloud, the hosted version, clips your first video free up to 60 minutes, then 20 minutes a month with a watermark, and paid plans start at $12/month without one. It also includes a free AI YouTube thumbnail generator, free AI YouTube title generator, and free AI YouTube description generator — features that other clip generators charge extra for. You self-host it with Docker on your own machine for full privacy and control."
+      answer: "Yes. Clipper is an open source clip generator (also known as open source clipping software or an AI video clipper) under the MIT licence. Self-hosted, it generates unlimited clips with no watermarks, no usage limits and no subscription fees. Clipper Cloud, the hosted version, clips your first video free up to 60 minutes, then 20 minutes a month with a watermark, and paid plans start at $12/month without one. It also includes a free AI YouTube thumbnail generator, free AI YouTube title generator, and free AI YouTube description generator — features that other clip generators charge extra for. You self-host it with Docker on your own machine for full privacy and control."
     },
     {
-      question: "Can I automate OpenShorts from Claude, ChatGPT or n8n?",
-      answer: "Yes. OpenShorts has a native MCP server at mcp.openshorts.app/mcp plus a REST API with per-user keys and completion webhooks, so an AI agent can run the whole flow: submit a video URL, wait for processing, list the clips and publish them to TikTok, Instagram, YouTube, Facebook, LinkedIn, Threads or Bluesky. This is where the hosted service shines: an agent needs an endpoint that is always on, and the hosted one is, with the API key created in your account page in one click. The self-hosted edition serves the same /mcp endpoint, but only while your own machine is running. There is also a zero-dependency CLI (pip install openshorts) and an importable n8n workflow. Full guide at openshorts.app/mcp."
+      question: "Can I automate Clipper from Claude, ChatGPT or n8n?",
+      answer: "Yes. Clipper has a native MCP server at mcp.openshorts.app/mcp plus a REST API with per-user keys and completion webhooks, so an AI agent can run the whole flow: submit a video URL, wait for processing, list the clips and publish them to TikTok, Instagram, YouTube, Facebook, LinkedIn, Threads or Bluesky. This is where the hosted service shines: an agent needs an endpoint that is always on, and the hosted one is, with the API key created in your account page in one click. The self-hosted edition serves the same /mcp endpoint, but only while your own machine is running. There is also a zero-dependency CLI (pip install openshorts) and an importable n8n workflow. Full guide at openshorts.app/mcp."
     },
     {
-      question: "What are the system requirements to run OpenShorts?",
-      answer: "OpenShorts runs on any system with Docker installed. The recommended setup is 8GB+ RAM and a modern multi-core CPU. GPU acceleration (NVIDIA CUDA) is optional but speeds up video processing significantly. The Docker Compose setup handles all dependencies automatically — Python 3.11, FFmpeg, YOLOv8, MediaPipe, faster-whisper, and the React dashboard. It works on Linux, macOS, and Windows (via WSL2/Docker Desktop)."
+      question: "What are the system requirements to run Clipper?",
+      answer: "Clipper runs on any system with Docker installed. The recommended setup is 8GB+ RAM and a modern multi-core CPU. GPU acceleration (NVIDIA CUDA) is optional but speeds up video processing significantly. The Docker Compose setup handles all dependencies automatically — Python 3.11, FFmpeg, YOLOv8, MediaPipe, faster-whisper, and the React dashboard. It works on Linux, macOS, and Windows (via WSL2/Docker Desktop)."
     }
   ];
 
   const checkIcon = <Check size={16} className="text-brass mx-auto" />;
   const checkMuted = <Check size={16} className="text-muted mx-auto" />;
-  const xIcon = <span className="text-muted text-sm">Paid</span>;
 
   return (
     <div className="min-h-screen bg-paper text-ink2 overflow-x-clip">
@@ -575,8 +571,6 @@ export default function Landing({ onLaunchApp }) {
       <section className="hero-blueprint relative overflow-clip border-b border-rule pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-14 items-center">
           <div className="min-w-0">
-            <p className="eyebrow mb-6">00 · Free AI Clip Generator · Open Source</p>
-
             <h1 className="hero-h1 mb-6">
               <span className="block">free ai clip maker:</span>{' '}
               <span className="block">long video in,</span>{' '}
@@ -614,27 +608,6 @@ export default function Landing({ onLaunchApp }) {
                 </button>
               </div>
             </form>
-
-            {/* Trust line right under the CTA: the objection this removes
-                (a card) is the whole point of the free plan. */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-5 text-sm">
-              <span className="badge-ok whitespace-nowrap">
-                <Check size={12} /> no credit card required
-              </span>
-              <span className="text-muted lowercase">first video free (up to 60 min) · then 20 min every month</span>
-            </div>
-
-            <p className="text-sm text-muted lowercase">
-              <a href="#pricing" className="underline underline-offset-2 hover:text-ink">paid plans from $12/mo</a> without watermark. prefer to run it yourself?{' '}
-              <a
-                href="https://github.com/mutonby/openshorts"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-ink2 underline hover:text-ink transition-colors"
-              >
-                self-host free on github →
-              </a>
-            </p>
 
             <p className="mt-4 text-sm text-muted lowercase">
               paste a link to your video on{' '}
@@ -683,10 +656,10 @@ export default function Landing({ onLaunchApp }) {
             ['45,000+', 'accounts created'],
             ['32,900+', 'videos clipped'],
             ['8,300+', 'hours of video processed'],
-            ['7.5k', 'github stars'],
+            ['3–15', 'clips per video'],
           ].map(([n, label]) => (
             <div key={label} className="px-4">
-              <div className="font-display text-4xl md:text-5xl text-ink tabular-nums">{n}</div>
+              <div className="font-display text-4xl md:text-5xl text-brass tabular-nums">{n}</div>
               <div className="eyebrow mt-2">{label}</div>
             </div>
           ))}
@@ -745,7 +718,7 @@ export default function Landing({ onLaunchApp }) {
           The pattern the market leader opens with, shown with our own output. */}
       <section className="py-20 px-6 border-b border-rule">
         <div className="max-w-6xl mx-auto">
-          <SectionHeader eyebrow="02 · One Video, Six Clips" title="one 27-minute episode in. six ready-to-post clips out.">
+          <SectionHeader title="one 27-minute episode in. six ready-to-post clips out.">
             No prompts, no settings and no scrubbing: the AI scored every moment, kept the six that stand on their own and cut them with captions and a hook.
           </SectionHeader>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,15rem)_auto_minmax(0,1fr)] gap-6 items-center">
@@ -770,7 +743,7 @@ export default function Landing({ onLaunchApp }) {
             </div>
           </div>
           <p className="mt-6 text-xs text-muted">
-            Source: <a href="https://www.youtube.com/watch?v=-KbQj_vboOU" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">Turn the Tables with Dan and Shoshana Jordan</a>, Heritage of Faith, licensed CC BY. Clipped by OpenShorts, scores as the AI gave them.
+            Source: <a href="https://www.youtube.com/watch?v=-KbQj_vboOU" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">Turn the Tables with Dan and Shoshana Jordan</a>, Heritage of Faith, licensed CC BY. Clipped by Clipper, scores as the AI gave them.
           </p>
         </div>
       </section>
@@ -778,7 +751,7 @@ export default function Landing({ onLaunchApp }) {
       {/* Smart crop — real product output: 16:9 source to 9:16 result */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader eyebrow="03 · Smart Crop" title="one video in. the moment, reframed.">
+          <SectionHeader title="one video in. the moment, reframed.">
             Real output, not a mock-up: the AI picks the moment, reframes 16:9 to vertical 9:16 and burns in the captions.
           </SectionHeader>
           {DEMOS.length > 1 && (
@@ -797,7 +770,7 @@ export default function Landing({ onLaunchApp }) {
               ))}
             </div>
           )}
-          <figure className="crop-frame crop-frame-16-9 w-full" aria-label="original video next to the vertical clip OpenShorts made from it">
+          <figure className="crop-frame crop-frame-16-9 w-full" aria-label="original video next to the vertical clip Clipper made from it">
             <video
               key={DEMOS[cropDemo].id}
               src={DEMOS[cropDemo].video}
@@ -813,7 +786,7 @@ export default function Landing({ onLaunchApp }) {
             />
           </figure>
           <p className="mt-6 text-xs text-muted">
-            Source: <a href={DEMOS[cropDemo].creditUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">{DEMOS[cropDemo].credit}</a>, {DEMOS[cropDemo].creditBy}, licensed CC BY. Clipped by OpenShorts.
+            Source: <a href={DEMOS[cropDemo].creditUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">{DEMOS[cropDemo].credit}</a>, {DEMOS[cropDemo].creditBy}, licensed CC BY. Clipped by Clipper.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <button
@@ -834,7 +807,7 @@ export default function Landing({ onLaunchApp }) {
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 px-6 border-t border-rule">
         <div className="max-w-4xl mx-auto">
-          <SectionHeader eyebrow="04 · Pipeline" title="How to turn a long video into Shorts with AI (5 steps)">
+          <SectionHeader title="How to turn a long video into Shorts with AI (5 steps)">
             From long-form video to viral-ready clips in 5 automated steps.
           </SectionHeader>
           <div className="space-y-8">
@@ -845,71 +818,11 @@ export default function Landing({ onLaunchApp }) {
         </div>
       </section>
 
-      {/* Two ways to use it: free self-host vs paid hosted */}
-      <section className="py-20 px-6 border-t border-rule">
-        <div className="max-w-4xl mx-auto">
-          <SectionHeader eyebrow="05 · Deploy" title="Two ways to use OpenShorts">
-            The same open source software, running either on our GPU or on your machine.
-          </SectionHeader>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="card p-8 flex flex-col border-brass">
-              <div className="flex flex-wrap items-center gap-3 mb-3">
-                <Sparkles size={18} className="text-brass" />
-                <h3 className="font-display text-2xl lowercase text-ink">cloud · openshorts.app</h3>
-                <span className="badge-brass">Recommended · Free Plan</span>
-              </div>
-              <ul className="space-y-1.5 mb-6 flex-1">
-                {['Our NVIDIA GPU: an 8-min video in about 50s', 'Gemini key included, nothing to set up', 'Social publishing built in', 'Connect Claude or ChatGPT directly: paste one URL, no API key', 'First video free up to 60 min, then 20 min/month, no card'].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-muted"><Check size={14} className="text-ok shrink-0" />{f}</li>
-                ))}
-              </ul>
-              {billingEnabled ? (
-                <a href="#pricing" className="btn-primary whitespace-nowrap">
-                  start free <ArrowRight size={16} />
-                </a>
-              ) : (
-                <button onClick={onLaunchApp} className="btn-primary whitespace-nowrap">
-                  launch openshorts <ArrowRight size={16} />
-                </button>
-              )}
-            </div>
-            <div className="card p-8 flex flex-col">
-              <div className="flex flex-wrap items-center gap-3 mb-3">
-                <Github size={18} className="text-muted" />
-                <h3 className="font-display text-2xl lowercase text-ink">self-hosted · for developers</h3>
-                <span className="readout border border-rule rounded-full px-2.5 py-1">Free · Docker</span>
-              </div>
-              <ul className="space-y-1.5 mb-6 flex-1">
-                {['Your machine: 5 to 8 min on a typical CPU', 'Bring your own Gemini, ElevenLabs and fal.ai keys', 'You install it, you maintain it, you back it up', 'Free forever, and always will be'].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-muted"><Check size={14} className="text-ok shrink-0" />{f}</li>
-                ))}
-              </ul>
-              <a href="https://github.com/mutonby/openshorts" target="_blank" rel="noopener noreferrer"
-                className="btn-ghost whitespace-nowrap">
-                <Github size={16} /> view on github
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section — hosted plans (self-host stays free) */}
-      {billingEnabled && (
-        <section id="pricing" className="py-20 px-6 border-t border-rule">
-          <div className="max-w-6xl mx-auto">
-            <SectionHeader eyebrow="06 · Pricing" title="Free plan vs paid: what you actually get">
-              Your first video is free, up to 60 minutes. Then 20 free minutes a month — no credit card. Cancel anytime.
-            </SectionHeader>
-            <PricingSection onRequireLogin={() => { window.location.hash = '#/pricing'; }} />
-          </div>
-        </section>
-      )}
-
       {/* Comparison Table */}
       <section id="comparison" className="py-20 px-6 border-t border-rule">
         <div className="max-w-4xl mx-auto">
-          <SectionHeader eyebrow="07 · Comparison" title="OpenShorts vs Opus Clip, Klap and Vizard">
-            Hosted OpenShorts starts at $12/mo billed monthly, or self-host it free. Opus Clip starts at $15/month, Klap at $14 and Vizard at $14.50 a month on yearly billing, Kapwing at $24/month.
+          <SectionHeader title="Clipper vs Opus Clip, Klap and Vizard">
+            See how Clipper stacks up against Opus Clip, Klap, Vizard, and Kapwing.
           </SectionHeader>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -917,29 +830,24 @@ export default function Landing({ onLaunchApp }) {
                 <tr className="border-b border-rule2">
                   <th className="py-3 px-4 text-left text-sm text-muted font-medium">Feature</th>
                   <th className="py-3 px-4 text-center text-sm font-medium">
-                    <span className="text-brass">OpenShorts</span>
-                    <span className="block text-xs text-muted font-normal">self-hosted / Cloud</span>
+                    <span className="text-brass">Clipper</span>
+                    <span className="block text-xs text-muted font-normal">AI Clipping</span>
                   </th>
                   <th className="py-3 px-4 text-center text-sm text-muted font-medium">Opus Clip</th>
                   <th className="py-3 px-4 text-center text-sm text-muted font-medium">Kapwing</th>
                 </tr>
               </thead>
               <tbody>
-                <ComparisonRow feature="Price" openshorts={<span className="text-ok font-medium">$0 / from $12/mo</span>} opusclip={xIcon} kapwing={xIcon} />
                 <ComparisonRow feature="AI Viral Moment Detection" openshorts={checkIcon} opusclip={checkMuted} kapwing={checkMuted} />
                 <ComparisonRow feature="Smart Vertical Cropping" openshorts={checkIcon} opusclip={checkMuted} kapwing={checkMuted} />
                 <ComparisonRow feature="Auto Subtitles" openshorts={checkIcon} opusclip={checkMuted} kapwing={checkMuted} />
-                <ComparisonRow feature="AI Voice Dubbing (30+ langs, your ElevenLabs key)" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">Limited</span>} kapwing={<span className="text-muted text-sm">No</span>} />
+                <ComparisonRow feature="AI Voice Dubbing (30+ langs)" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">Limited</span>} kapwing={<span className="text-muted text-sm">No</span>} />
                 <ComparisonRow feature="AI Video Effects" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">No</span>} kapwing={checkMuted} />
                 <ComparisonRow feature="Hook Text Overlays" openshorts={checkIcon} opusclip={checkMuted} kapwing={checkMuted} />
-                <ComparisonRow feature="Self-Hosted / Privacy" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">Cloud only</span>} kapwing={<span className="text-muted text-sm">Cloud only</span>} />
-                <ComparisonRow feature="No Watermark" openshorts={<span className="text-ok text-sm">Self-hosted &amp; paid</span>} opusclip={<span className="text-muted text-sm">Free tier only</span>} kapwing={<span className="text-muted text-sm">Paid</span>} />
-                <ComparisonRow feature="Open Source" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">No</span>} kapwing={<span className="text-muted text-sm">No</span>} />
                 <ComparisonRow feature="AI YouTube Thumbnail Generator" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">No</span>} kapwing={<span className="text-muted text-sm">Paid</span>} />
                 <ComparisonRow feature="AI Title & Description Generator" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">Limited</span>} kapwing={<span className="text-muted text-sm">Paid</span>} />
                 <ComparisonRow feature="AI UGC Video Generator" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">No</span>} kapwing={<span className="text-muted text-sm">No</span>} />
                 <ComparisonRow feature="AI Actors with Lip-Sync" openshorts={checkIcon} opusclip={<span className="text-muted text-sm">No</span>} kapwing={<span className="text-muted text-sm">No</span>} />
-                <ComparisonRow feature="Usage Limits" openshorts={<span className="text-ok text-sm">Unlimited self-hosted</span>} opusclip={<span className="text-muted text-sm">Per plan</span>} kapwing={<span className="text-muted text-sm">Per plan</span>} />
               </tbody>
             </table>
           </div>
@@ -959,7 +867,7 @@ export default function Landing({ onLaunchApp }) {
       {/* Use Cases */}
       <section className="py-20 px-6 border-t border-rule">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader eyebrow="08 · Use Cases" title="Who Uses OpenShorts?">
+          <SectionHeader title="Who Uses Clipper?">
             Creators, marketers, and agencies scaling short-form video production.
           </SectionHeader>
           <div className="grid md:grid-cols-3 gap-5">
@@ -998,12 +906,12 @@ export default function Landing({ onLaunchApp }) {
       {/* Also included: the two tools that are not the clipper */}
       <section className="py-20 px-6 border-t border-rule">
         <div className="max-w-6xl mx-auto">
-          <SectionHeader eyebrow="09 · Also Included" title="two more tools, same account">
-            In the same openshorts.app account, with no keys and no setup.
+          <SectionHeader title="two more tools, same account">
+            Included right inside Clipper, ready to use from the dashboard.
           </SectionHeader>
           <div className="grid md:grid-cols-2 gap-5">
             <div className="card p-8">
-              <p className="eyebrow mb-4">01 · AI Shorts</p>
+              <p className="eyebrow mb-4 text-brass opacity-100">01 · AI Shorts</p>
               <Sparkles size={20} className="text-brass mb-4" />
               <h3 className="font-display text-2xl lowercase text-ink mb-2">AI Shorts</h3>
               <p className="text-muted text-sm leading-relaxed mb-4">UGC marketing videos with AI actors for any business.</p>
@@ -1014,7 +922,7 @@ export default function Landing({ onLaunchApp }) {
               </ul>
             </div>
             <div className="card p-8">
-              <p className="eyebrow mb-4">02 · Studio</p>
+              <p className="eyebrow mb-4 text-brass opacity-100">02 · Studio</p>
               <Monitor size={20} className="text-brass mb-4" />
               <h3 className="font-display text-2xl lowercase text-ink mb-2">YouTube Studio</h3>
               <p className="text-muted text-sm leading-relaxed mb-4">Free AI YouTube toolkit: thumbnails, titles, descriptions.</p>
@@ -1031,8 +939,8 @@ export default function Landing({ onLaunchApp }) {
       {/* FAQ Section */}
       <section id="faq" className="py-20 px-6 border-t border-rule">
         <div className="max-w-3xl mx-auto">
-          <SectionHeader eyebrow="10 · FAQ" title="FAQ: free AI clipping, watermarks and limits">
-            Everything you need to know about OpenShorts, from setup to features.
+          <SectionHeader title="FAQ: AI clipping, captions and studio tools">
+            Everything you need to know about Clipper, from setup to features.
           </SectionHeader>
           <div className="divide-y divide-rule border-y border-rule">
             {faqs.map((faq, i) => (
@@ -1048,134 +956,16 @@ export default function Landing({ onLaunchApp }) {
         </div>
       </section>
 
-      {/* Self-hosting details, folded: they matter to people who run it
-          themselves and are noise to someone deciding whether to try the cloud.
-          The content stays in the DOM, so crawlers still read it. */}
-      <section className="py-16 px-6 border-t border-rule">
-        <div className="max-w-5xl mx-auto">
-          <details className="group">
-            <summary className="list-none cursor-pointer flex items-center justify-between gap-6 [&::-webkit-details-marker]:hidden">
-              <div>
-                <span className="eyebrow block mb-3">11 · Self-Hosting</span>
-                <h2 className="font-display text-2xl md:text-3xl lowercase text-ink">Open source: run the same pipeline on your own hardware</h2>
-              </div>
-              <ChevronDown size={22} className="text-muted shrink-0 transition-transform group-open:rotate-180" />
-            </summary>
-            {/* API Keys Section */}
-            <section className="pt-12">
-              <div className="max-w-5xl mx-auto">
-                <SectionHeader eyebrow="API Keys" title="Self-hosting? Every API has a free tier">
-                  Cloud plans include managed Gemini and social publishing: you never touch an API key. Self-hosters bring their own keys (all with generous free tiers):
-                </SectionHeader>
-                <div className="grid md:grid-cols-3 gap-5">
-                  <div className="card p-6 relative">
-                    <span className="badge-brass absolute top-4 right-4">Required</span>
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center mb-4">
-                      <Cpu size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-display text-xl lowercase text-ink mb-1">Google Gemini API</h3>
-                    <div className="mb-3"><span className="badge-ok">Free tier: 1,500 req/day</span></div>
-                    <p className="text-muted text-sm leading-relaxed">Powers all AI features: viral moment detection, title generation, video effects, YouTube thumbnail creation, and description writing. The core engine of OpenShorts.</p>
-                  </div>
-                  <div className="card p-6 relative">
-                    <span className="readout absolute top-4 right-4 border border-rule rounded-full px-2.5 py-1">Optional</span>
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center mb-4">
-                      <Languages size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-display text-xl lowercase text-ink mb-1">ElevenLabs API</h3>
-                    <div className="mb-3"><span className="badge-ok">Free tier included</span></div>
-                    <p className="text-muted text-sm leading-relaxed">Enables AI voice dubbing and translation in 30+ languages. Preserves the original speaker's voice while translating audio. Dubbed clips are auto-subtitled.</p>
-                  </div>
-                  <div className="card p-6 relative">
-                    <span className="readout absolute top-4 right-4 border border-rule rounded-full px-2.5 py-1">Optional</span>
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center mb-4">
-                      <Globe size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-display text-xl lowercase text-ink mb-1">Upload-Post API</h3>
-                    <div className="mb-3"><span className="badge-ok">Free tier included</span></div>
-                    <p className="text-muted text-sm leading-relaxed">Enables direct publishing to YouTube, TikTok, and Instagram Reels from the dashboard. <a href="https://www.upload-post.com" target="_blank" rel="noopener noreferrer" className="text-brass underline hover:brightness-110">Social media API</a> that lets you post your clips and thumbnails without leaving OpenShorts.</p>
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-5 mt-5">
-                  <div className="card p-6 relative">
-                    <span className="readout absolute top-4 right-4 border border-rule rounded-full px-2.5 py-1">AI Shorts</span>
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center mb-4">
-                      <Zap size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-display text-xl lowercase text-ink mb-1">fal.ai API</h3>
-                    <div className="mb-3"><span className="badge-ok">Pay-per-use from $0.04</span></div>
-                    <p className="text-muted text-sm leading-relaxed">Powers AI Shorts: generates AI actor images (Flux), talking head videos (Hailuo/Kling), and lip-sync (VEED). Required only for the AI UGC video generator.</p>
-                  </div>
-                  <div className="card p-6 relative">
-                    <span className="readout absolute top-4 right-4 border border-rule rounded-full px-2.5 py-1">AI Shorts</span>
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center mb-4">
-                      <Languages size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-display text-xl lowercase text-ink mb-1">ElevenLabs TTS</h3>
-                    <div className="mb-3"><span className="badge-ok">Free tier included</span></div>
-                    <p className="text-muted text-sm leading-relaxed">Generates natural voiceovers for AI Shorts from the script. Multiple voice options for male and female actors in English and Spanish.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Tech Stack */}
-            <section className="pt-12">
-              <div className="max-w-5xl mx-auto">
-                <SectionHeader eyebrow="Stack" title="Built with Proven Technology">
-                  Industry-leading AI models and open source tools in one pipeline.
-                </SectionHeader>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { name: "Google Gemini 3.1", desc: "AI Analysis" },
-                    { name: "faster-whisper", desc: "Transcription" },
-                    { name: "YOLOv8", desc: "Object Detection" },
-                    { name: "MediaPipe", desc: "Face Tracking" },
-                    { name: "FFmpeg", desc: "Video Processing" },
-                    { name: "ElevenLabs", desc: "Voice & TTS" },
-                    { name: "fal.ai", desc: "AI Video Gen" },
-                    { name: "React + Vite", desc: "Dashboard" },
-                    { name: "Docker", desc: "Deployment" }
-                  ].map((tech, i) => (
-                    <div key={i} className="border border-rule rounded-input bg-paper2 px-4 py-3 text-center">
-                      <div className="readout text-ink2">{tech.name}</div>
-                      <div className="text-xs text-muted mt-1">{tech.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-          </details>
-        </div>
-      </section>
-
       {/* CTA Section — final statement */}
       <section className="py-24 px-6 border-t border-rule">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-display text-4xl md:text-5xl lowercase text-ink tracking-tight mb-5">start creating viral videos today.</h2>
-          <p className="text-muted mb-10 max-w-xl mx-auto leading-relaxed lowercase">first video free (up to 60 min) · then 20 min/month · no credit card, or self-host it free with docker.</p>
+          <h2 className="font-display text-4xl md:text-5xl lowercase text-ink tracking-tight mb-5">start creating <span className="text-brass">viral videos</span> today.</h2>
+          <p className="text-muted mb-10 max-w-xl mx-auto leading-relaxed lowercase">paste a link or upload any video to cut 9:16 shorts with captions in minutes.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            {billingEnabled ? (
-              <a href="#pricing" className="btn-primary whitespace-nowrap">
-                start free
-                <ArrowRight size={16} />
-              </a>
-            ) : (
-              <button onClick={onLaunchApp} className="btn-primary whitespace-nowrap">
-                launch openshorts
-                <ArrowRight size={16} />
-              </button>
-            )}
-            <a
-              href="https://github.com/mutonby/openshorts"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-ghost whitespace-nowrap"
-            >
-              <Github size={16} />
-              Star on GitHub
-            </a>
+            <button onClick={onLaunchApp} className="btn-primary whitespace-nowrap">
+              launch clipper
+              <ArrowRight size={16} />
+            </button>
           </div>
         </div>
       </section>
@@ -1204,63 +994,55 @@ export default function Landing({ onLaunchApp }) {
       {/* Footer — Ft5 Statement */}
       <footer className="border-t border-rule py-16 px-6">
         <div className="max-w-6xl mx-auto">
-          <p className="font-display text-3xl md:text-5xl lowercase text-ink tracking-tight mb-10">clip it before it scrolls past.</p>
+          <p className="font-display text-3xl md:text-5xl lowercase text-ink tracking-tight mb-10">clip it before it <span className="text-brass">scrolls past</span>.</p>
           <nav aria-label="Guides and comparisons" className="border-t border-rule pt-6 mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm lowercase text-muted">
-            <a href="/free-ai-clip-generator" className="hover:text-ink transition-colors">free ai clip generator</a>
-            <a href="/tools" className="hover:text-ink transition-colors">free tools</a>
-            <a href="/youtube-transcript-generator" className="hover:text-ink transition-colors">youtube transcript generator</a>
-            <a href="/youtube-tag-generator" className="hover:text-ink transition-colors">youtube tag generator</a>
-            <a href="/video-aspect-ratio-converter" className="hover:text-ink transition-colors">video to 9:16 converter</a>
-            <a href="/auto-clip" className="hover:text-ink transition-colors">auto clip</a>
-            <a href="/youtube-automation" className="hover:text-ink transition-colors">youtube automation</a>
-            <a href="/platforms" className="hover:text-ink transition-colors">all platforms</a>
-            <a href="/use-cases" className="hover:text-ink transition-colors">use cases</a>
-            <a href="/how-to" className="hover:text-ink transition-colors">guides</a>
-            <a href="/platforms/youtube"className="hover:text-ink transition-colors">youtube clip maker</a>
-            <a href="/platforms/youtube-shorts" className="hover:text-ink transition-colors">youtube shorts maker</a>
-            <a href="/platforms/tiktok" className="hover:text-ink transition-colors">tiktok clip maker</a>
-            <a href="/platforms/instagram-reels" className="hover:text-ink transition-colors">ai reel generator</a>
-            <a href="/platforms/twitch" className="hover:text-ink transition-colors">twitch clip maker</a>
-            <a href="/platforms/kick" className="hover:text-ink transition-colors">kick clip maker</a>
-            <a href="/auto-reframe" className="hover:text-ink transition-colors">auto reframe</a>
-            <a href="/use-cases/sermons" className="hover:text-ink transition-colors">sermon clip maker</a>
-            <a href="/how-to/clip-a-youtube-video" className="hover:text-ink transition-colors">how to clip a youtube video</a>
-            <a href="/pricing" className="hover:text-ink transition-colors">pricing</a>
-            <a href="/open-source-video-clipper" className="hover:text-ink transition-colors">open source video clipper</a>
-            <a href="/self-hosted-ai-clip-maker" className="hover:text-ink transition-colors">self-hosted ai clip maker</a>
-            <a href="/podcast-to-shorts" className="hover:text-ink transition-colors">podcast clips</a>
-            <a href="/youtube-to-shorts-converter" className="hover:text-ink transition-colors">youtube to shorts</a>
-            <a href="/how-openshorts-works" className="hover:text-ink transition-colors">how it works</a>
-            <a href="/alternatives" className="hover:text-ink transition-colors">alternatives</a>
-            <a href="/free-ai-clipping-tools-compared" className="hover:text-ink transition-colors">free ai clipping tools compared</a>
-            <a href="/alternativas" className="hover:text-ink transition-colors">alternativas</a>
-            <a href="/alternatives/opus-clip" className="hover:text-ink transition-colors">vs opus clip</a>
-            <a href="/opus-clip-pricing" className="hover:text-ink transition-colors">opus clip pricing</a>
-            <a href="/opus-ai" className="hover:text-ink transition-colors">opus ai</a>
-            <a href="/vizard-ai" className="hover:text-ink transition-colors">vizard ai</a>
-            <a href="/vizard-ai-video-to-text" className="hover:text-ink transition-colors">vizard ai video to text</a>
-            <a href="/alternatives/vidyo-ai" className="hover:text-ink transition-colors">vidyo ai (quso)</a>
-            <a href="/alternatives/2short" className="hover:text-ink transition-colors">2short ai</a>
-            <a href="/alternatives/sendshort" className="hover:text-ink transition-colors">sendshort</a>
-            <a href="/submagic-reviews" className="hover:text-ink transition-colors">submagic review</a>
-            <a href="/mcp" className="hover:text-ink transition-colors">mcp server & api</a>
-            <a href="/automate-shorts-api" className="hover:text-ink transition-colors">automate shorts</a>
-            <a href="/n8n-youtube-shorts-automation" className="hover:text-ink transition-colors">n8n workflow</a>
+            <a href="/free-ai-clip-generator" className="hover:text-brass transition-colors">free ai clip generator</a>
+            <a href="/tools" className="hover:text-brass transition-colors">free tools</a>
+            <a href="/youtube-transcript-generator" className="hover:text-brass transition-colors">youtube transcript generator</a>
+            <a href="/youtube-tag-generator" className="hover:text-brass transition-colors">youtube tag generator</a>
+            <a href="/video-aspect-ratio-converter" className="hover:text-brass transition-colors">video to 9:16 converter</a>
+            <a href="/auto-clip" className="hover:text-brass transition-colors">auto clip</a>
+            <a href="/youtube-automation" className="hover:text-brass transition-colors">youtube automation</a>
+            <a href="/platforms" className="hover:text-brass transition-colors">all platforms</a>
+            <a href="/use-cases" className="hover:text-brass transition-colors">use cases</a>
+            <a href="/how-to" className="hover:text-brass transition-colors">guides</a>
+            <a href="/platforms/youtube" className="hover:text-brass transition-colors">youtube clip maker</a>
+            <a href="/platforms/youtube-shorts" className="hover:text-brass transition-colors">youtube shorts maker</a>
+            <a href="/platforms/tiktok" className="hover:text-brass transition-colors">tiktok clip maker</a>
+            <a href="/platforms/instagram-reels" className="hover:text-brass transition-colors">ai reel generator</a>
+            <a href="/platforms/twitch" className="hover:text-brass transition-colors">twitch clip maker</a>
+            <a href="/platforms/kick" className="hover:text-brass transition-colors">kick clip maker</a>
+            <a href="/auto-reframe" className="hover:text-brass transition-colors">auto reframe</a>
+            <a href="/use-cases/sermons" className="hover:text-brass transition-colors">sermon clip maker</a>
+            <a href="/how-to/clip-a-youtube-video" className="hover:text-brass transition-colors">how to clip a youtube video</a>
+            <a href="/podcast-to-shorts" className="hover:text-brass transition-colors">podcast clips</a>
+            <a href="/youtube-to-shorts-converter" className="hover:text-brass transition-colors">youtube to shorts</a>
+            <a href="/how-openshorts-works" className="hover:text-brass transition-colors">how it works</a>
+            <a href="/alternatives" className="hover:text-brass transition-colors">alternatives</a>
+            <a href="/free-ai-clipping-tools-compared" className="hover:text-brass transition-colors">free ai clipping tools compared</a>
+            <a href="/alternativas" className="hover:text-brass transition-colors">alternativas</a>
+            <a href="/alternatives/opus-clip" className="hover:text-brass transition-colors">vs opus clip</a>
+            <a href="/alternatives/vidyo-ai" className="hover:text-brass transition-colors">vidyo ai (quso)</a>
+            <a href="/alternatives/2short" className="hover:text-brass transition-colors">2short ai</a>
+            <a href="/alternatives/sendshort" className="hover:text-brass transition-colors">sendshort</a>
+            <a href="/submagic-reviews" className="hover:text-brass transition-colors">submagic review</a>
+            <a href="/mcp" className="hover:text-brass transition-colors">mcp server & api</a>
+            <a href="/automate-shorts-api" className="hover:text-brass transition-colors">automate shorts</a>
+            <a href="/n8n-youtube-shorts-automation" className="hover:text-brass transition-colors">n8n workflow</a>
           </nav>
           <div className="border-t border-rule pt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img src="/logo-openshorts.png" alt="OpenShorts" className="w-6 h-6" />
-              <span className="text-sm text-muted">OpenShorts — Free Open Source Clip Generator & AI UGC Video Creator</span>
+              <span className="text-sm text-brass font-medium">Clipper</span>
+              <span className="text-sm text-muted">— AI Clip Generator &amp; Video Creator</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm lowercase text-muted">
-              <a href="https://github.com/mutonby/openshorts" target="_blank" rel="noopener noreferrer" className="hover:text-ink transition-colors">GitHub</a>
-              <a href="#features" className="hover:text-ink transition-colors">Features</a>
-              <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
-              <a href="/terms" className="hover:text-ink transition-colors whitespace-nowrap">Terms</a>
-              <a href="/privacy" className="hover:text-ink transition-colors whitespace-nowrap">Privacy</a>
-              <a href="/legal-notice" className="hover:text-ink transition-colors whitespace-nowrap">Legal Notice</a>
-              <a href="/refunds" className="hover:text-ink transition-colors whitespace-nowrap">Refunds</a>
-              <a href="/report-content" className="hover:text-ink transition-colors whitespace-nowrap">Report Content</a>
+              <a href="#features" className="hover:text-brass transition-colors">Features</a>
+              <a href="#faq" className="hover:text-brass transition-colors">FAQ</a>
+              <a href="/terms" className="hover:text-brass transition-colors whitespace-nowrap">Terms</a>
+              <a href="/privacy" className="hover:text-brass transition-colors whitespace-nowrap">Privacy</a>
+              <a href="/legal-notice" className="hover:text-brass transition-colors whitespace-nowrap">Legal Notice</a>
+              <a href="/refunds" className="hover:text-brass transition-colors whitespace-nowrap">Refunds</a>
+              <a href="/report-content" className="hover:text-brass transition-colors whitespace-nowrap">Report Content</a>
             </div>
           </div>
         </div>

@@ -86,7 +86,15 @@ export default function OAuthConsent() {
   const hosts = client?.redirect_hosts || [];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+      <button
+        type="button"
+        onClick={() => (window.history.length > 1 ? window.history.back() : (window.location.hash = ''))}
+        aria-label="Go back"
+        className="btn-quiet px-2.5 py-1.5 text-xs lowercase fixed top-4 left-4 z-20"
+      >
+        ← Back
+      </button>
       <div className="card p-8 max-w-md w-full text-center">
         <div className="w-12 h-12 rounded-full bg-brass/10 flex items-center justify-center mx-auto mb-4">
           <Plug size={20} className="text-brass" />

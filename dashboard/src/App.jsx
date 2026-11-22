@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Upload, Sparkles, Youtube, Instagram, Share2, ChevronDown, Check, Activity, LayoutDashboard, Settings, Plus, History, X, Terminal, Shield, LayoutGrid, Image, Globe, RotateCcw, Calendar, AlertTriangle, KeyRound, Bot, Users, Smartphone, ExternalLink, Copy, CheckCircle2, Mail, Loader2, Download, Menu, Lock, Rocket } from 'lucide-react';
+import { Upload, Sparkles, Youtube, Instagram, Share2, ChevronDown, Check, Activity, LayoutDashboard, Settings, Plus, History, X, Terminal, Shield, LayoutGrid, Image, Globe, RotateCcw, Calendar, AlertTriangle, KeyRound, ArrowLeft, Loader2, Download, Menu, Lock, Rocket } from 'lucide-react';
 import KeyInput from './components/KeyInput';
 import MediaInput from './components/MediaInput';
 import McpConnectCard from './components/McpConnectCard';
@@ -8,7 +8,6 @@ import ProcessingAnimation from './components/ProcessingAnimation';
 import { clipProgress, FREE_CLIPS_PER_VIDEO, FREE_CLIPS_QUIET, MAX_CLIPS_PER_VIDEO } from './lib/clipProgress';
 // import Gallery from './components/Gallery';
 import ThumbnailStudio from './components/ThumbnailStudio';
-import SaaShortsTab from './components/SaaShortsTab';
 import UGCGallery from './components/UGCGallery';
 import ScheduleWeekModal from './components/ScheduleWeekModal';
 import ClipEditor from './components/ClipEditor';
@@ -24,7 +23,6 @@ import OnboardingSurvey from './components/OnboardingSurvey';
 import TrialUpgradeModal from './components/TrialUpgradeModal';
 import LoginModal from './components/LoginModal';
 import TrialGate from './components/TrialGate';
-import AdvancedBanner from './components/AdvancedBanner';
 import HistoryTab from './components/HistoryTab';
 import AutopilotTab from './components/AutopilotTab';
 import ProfileMenu from './components/ProfileMenu';
@@ -1087,7 +1085,7 @@ function App() {
   // dropped so a reload does not keep forcing the tab.
   const [autopilotConnected, setAutopilotConnected] = useState(null); // connect outcome, see lib/connectReturn.js
   useEffect(() => {
-    const DEEP_LINK_TABS = ['autopilot', 'history', 'settings', 'thumbnails', 'dashboard', 'saasshorts'];
+    const DEEP_LINK_TABS = ['autopilot', 'history', 'settings', 'thumbnails', 'dashboard', 'ugc-gallery'];
     const apply = () => {
       const hash = window.location.hash || '';
       if (!hash.startsWith('#app?')) return;
@@ -1168,13 +1166,9 @@ function App() {
     track('ClipTutorialSkipped', { props: { phase: tutorialPhase } });
     finishTutorial();
   };
-  // Included in the plan (fully managed, no keys): Clip Generator + YouTube Studio.
-  // Advanced (bring your own fal.ai + ElevenLabs keys): AI Shorts + AI Agent.
   const INCLUDED_TOOL_TABS = ['dashboard', 'thumbnails'];
-  const ADVANCED_TOOL_TABS = ['saasshorts', 'ai-agent'];
   const TOOL_NAMES = { dashboard: 'the Clip Generator', thumbnails: 'the YouTube Studio' };
   const gateThisTab = needsPlan && INCLUDED_TOOL_TABS.includes(activeTab);      // included tool, no plan yet
-  const advancedThisTab = billingEnabled && ADVANCED_TOOL_TABS.includes(activeTab); // BYOK-notice tools
 
   // Social nudge visibility: managed users with clips on screen and no network
   // connected yet. userProfiles being empty (not yet fetched / none created)
@@ -1451,12 +1445,10 @@ function App() {
     { id: 'dashboard', ord: '01', icon: LayoutDashboard, label: 'Clip Generator', short: 'clips', primary: true },
     // Cloud only: it runs on the managed pipeline and the Upload-Post connection.
     ...(billingEnabled ? [{ id: 'autopilot', ord: '02', icon: Rocket, label: 'Autopilot', short: 'autopilot', isNew: true }] : []),
-    { id: 'saasshorts', ord: '03', icon: Sparkles, label: 'AI Shorts', short: 'ai shorts', byok: true, primary: true },
-    { id: 'ai-agent', ord: '04', icon: Bot, label: 'AI Agent', short: 'agent', byok: true },
-    { id: 'ugc-gallery', ord: '05', icon: LayoutGrid, label: 'UGC Gallery', short: 'gallery', primary: true },
-    { id: 'thumbnails', ord: '06', icon: Image, label: 'YouTube Studio', short: 'studio', primary: true },
-    ...(billingEnabled && isSignedIn ? [{ id: 'history', ord: '07', icon: History, label: 'History', short: 'history' }] : []),
-    { id: 'settings', ord: '08', icon: Settings, label: 'Settings', short: 'settings' },
+    { id: 'ugc-gallery', ord: '02', icon: LayoutGrid, label: 'UGC Gallery', short: 'gallery', primary: true },
+    { id: 'thumbnails', ord: '03', icon: Image, label: 'YouTube Studio', short: 'studio', primary: true },
+    ...(billingEnabled && isSignedIn ? [{ id: 'history', ord: '04', icon: History, label: 'History', short: 'history' }] : []),
+    { id: 'settings', ord: '04', icon: Settings, label: 'Settings', short: 'settings' },
   ];
   const activeNav = navItems.find((n) => n.id === activeTab);
 
@@ -1476,55 +1468,27 @@ function App() {
   };
   const tabLocked = (id) => tutorialLock && id !== 'dashboard';
 
-  // Shared footer links (landing, repo, pricing, contact) — same list in the
-  // desktop rail and the mobile drawer, so they can never drift apart.
-  const NavFooterLinks = ({ collapsed = false }) => (
-    <>
-      <a
-        href="#landing"
-        className="flex items-center gap-2 px-3 py-2 text-xs lowercase text-muted hover:text-ink2 transition-colors"
-      >
-        <Globe size={14} className="shrink-0" />
-        <span className={collapsed ? 'hidden lg:block truncate' : 'truncate'}>landing page</span>
-      </a>
-      <a
-        href="https://github.com/mutonby/openshorts"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2 text-xs lowercase text-muted hover:text-ink2 transition-colors"
-      >
-        <svg height="14" viewBox="0 0 16 16" version="1.1" width="14" aria-hidden="true" fill="currentColor" className="shrink-0"><path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-        <span className={collapsed ? 'hidden lg:block truncate' : 'truncate'}>open source</span>
-      </a>
-      {billingEnabled && (
-        <a
-          href="#/pricing"
-          className="flex items-center gap-2 px-3 py-2 text-xs lowercase text-muted hover:text-ink2 transition-colors"
-        >
-          <Sparkles size={14} className="shrink-0" />
-          <span className={collapsed ? 'hidden lg:block truncate' : 'truncate'}>plans &amp; pricing</span>
-        </a>
-      )}
-      <a
-        href="mailto:info@openshorts.app"
-        className="flex items-center gap-2 px-3 py-2 text-xs lowercase text-muted hover:text-ink2 transition-colors"
-      >
-        <Mail size={14} className="shrink-0" />
-        <span className={collapsed ? 'hidden lg:block truncate' : 'truncate'}>info@openshorts.app</span>
-      </a>
-    </>
-  );
+  const handleBack = () => {
+    if (window.history.length > 1) window.history.back();
+    else window.location.hash = '';
+  };
 
   // Desktop rail: icon-only from md, labelled from lg. Below md it is gone
   // entirely — an unlabelled 80px rail ate a fifth of a phone screen.
   const Sidebar = () => (
     <div className="hidden md:flex w-20 lg:w-64 bg-paper2 border-r border-rule flex-col h-full shrink-0 transition-all duration-300">
-      <a href="#app" onClick={() => goToTab('dashboard')} className="p-6 flex items-center gap-3" title="openshorts home">
-        <div className="w-8 h-8 bg-paper3 rounded-input flex items-center justify-center shrink-0 overflow-hidden border border-rule">
-          <img src="/logo-openshorts.png" alt="Logo" className="w-full h-full object-cover" />
-        </div>
-        <span className="font-display lowercase text-lg text-ink hidden lg:block">openshorts</span>
-      </a>
+      <div className="px-3 py-4 lg:px-5 lg:py-5 flex items-center justify-center lg:justify-start gap-2">
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Go back"
+          title="Back"
+          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-input border border-rule text-xs lowercase text-muted hover:text-ink hover:bg-paper3 transition-colors shrink-0"
+        >
+          <ArrowLeft size={14} />
+          <span className="hidden lg:inline">back</span>
+        </button>
+      </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
         {navItems.map((item) => {
@@ -1554,9 +1518,6 @@ function App() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-rule space-y-1">
-        <NavFooterLinks collapsed />
-      </div>
     </div>
   );
 
@@ -1576,10 +1537,7 @@ function App() {
       <div className="relative w-[17rem] max-w-[82vw] h-full bg-paper2 border-r border-rule flex flex-col animate-slide-in-left">
         <div className="flex items-center justify-between px-5 h-14 border-b border-rule shrink-0">
           <a href="#app" className="flex items-center gap-2.5" onClick={() => goToTab('dashboard')}>
-            <div className="w-7 h-7 bg-paper3 rounded-input overflow-hidden border border-rule shrink-0">
-              <img src="/logo-openshorts.png" alt="" className="w-full h-full object-cover" />
-            </div>
-            <span className="font-display lowercase text-lg text-ink">openshorts</span>
+            <span className="font-display lowercase text-lg text-ink">clipper</span>
           </a>
           <button
             onClick={() => setNavOpen(false)}
@@ -1617,9 +1575,6 @@ function App() {
           })}
         </nav>
 
-        <div className="px-3 py-3 border-t border-rule space-y-0.5 safe-bottom shrink-0">
-          <NavFooterLinks />
-        </div>
       </div>
     </div>
   );
@@ -1677,17 +1632,25 @@ function App() {
         {/* Top Header */}
         <header className="h-14 border-b border-rule bg-paper flex items-center justify-between gap-2 px-3 sm:px-6 shrink-0 z-10">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            {/* Mobile: the drawer handle, and the section name the icon rail
-                used to carry. Without it a phone has no "where am I". */}
+            {/* Mobile: back button, drawer handle, and section name. */}
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className="md:hidden -ml-1 px-2 py-1.5 rounded-input border border-rule text-xs lowercase text-muted hover:text-ink active:bg-paper3 transition-colors shrink-0 inline-flex items-center gap-1"
+            >
+              <ArrowLeft size={14} />
+              <span>back</span>
+            </button>
             <button
               onClick={() => setNavOpen(true)}
               aria-label="open navigation"
-              className="md:hidden -ml-1 p-2 rounded-input text-muted active:bg-paper3 transition-colors shrink-0"
+              className="md:hidden p-2 rounded-input text-muted active:bg-paper3 transition-colors shrink-0"
             >
               <Menu size={20} />
             </button>
             <span data-tutorial="nav-clips" className="md:hidden font-display lowercase text-base text-ink truncate">
-              {activeNav?.label || 'openshorts'}
+              {activeNav?.label || 'clipper'}
             </span>
             {status !== 'idle' && (
               <button
@@ -1765,10 +1728,10 @@ function App() {
                 <span className="font-medium text-ink">Required API keys missing.</span>{' '}
                 <span className="text-muted">
                   {!geminiOk && !uploadPostKey
-                    ? 'Set your Gemini and Upload-Post API keys to use OpenShorts.'
+                    ? 'Set your Gemini and Upload-Post API keys to use Clipper.'
                     : !geminiOk
-                      ? 'Set your Gemini API key to use OpenShorts.'
-                      : 'Set your Upload-Post API key to use OpenShorts.'}
+                      ? 'Set your Gemini API key to use Clipper.'
+                      : 'Set your Upload-Post API key to use Clipper.'}
                 </span>
               </div>
             </div>
@@ -1823,9 +1786,6 @@ function App() {
 
         {/* Included tools (Clip Generator, YouTube Studio): non-blocking trial prompt. */}
         {gateThisTab && <TrialGate toolName={TOOL_NAMES[activeTab] || 'this'} />}
-
-        {/* Advanced tools (AI Shorts, AI Agent): BYOK fal.ai + ElevenLabs notice. */}
-        {advancedThisTab && <AdvancedBanner needsPlan={needsPlan} onKeys={() => goToTab('settings')} />}
 
         {/* Main Workspace */}
         <div className="flex-1 overflow-hidden relative">
@@ -2064,132 +2024,14 @@ function App() {
             </div>
           )}
 
-          {/* View: SaaS Shorts */}
-          {activeTab === 'saasshorts' && (
-            <SaaShortsTab geminiApiKey={apiKey} elevenLabsKey={elevenLabsKey} falKey={falKey} uploadPostKey={uploadPostKey} uploadUserId={uploadUserId} managed={isManaged} />
-          )}
-
-          {/* View: AI Agent */}
-          {activeTab === 'ai-agent' && (
-            <div className="h-full overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-10 animate-fade">
-              <div className="max-w-4xl mx-auto space-y-8">
-
-                {/* Header */}
-                <div className="space-y-3">
-                  <p className="eyebrow flex items-center gap-2">
-                    <Bot size={12} /> 03 · AI AGENT · AUTONOMOUS SKILL
-                  </p>
-                  <h1 className="font-display lowercase text-3xl md:text-4xl text-ink">
-                    Your Personal Clipping Team
-                  </h1>
-                  <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl">
-                    Drop your videos in a folder and a team of AI clippers picks the viral moments, edits them, and queues them for your approval — like having a 24/7 short-form editing crew on autopilot.
-                  </p>
-                </div>
-
-                {/* Mobile-format warning */}
-                <div className="px-4 py-3 rounded-card border border-rule bg-paper2 flex items-start gap-3">
-                  <Smartphone size={18} className="text-warn shrink-0 mt-0.5" />
-                  <div className="text-sm text-ink2">
-                    <p className="font-medium text-ink mb-1">Upload videos already in vertical (9:16) mobile format.</p>
-                    <p className="text-muted leading-relaxed">
-                      The agent does not reframe horizontal footage. Make sure every source video is shot or pre-cropped to mobile/portrait format before dropping it into the input folder.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Workflow */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="card p-5 space-y-2">
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center">
-                      <Upload size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-medium text-ink lowercase">1. Drop your videos</h3>
-                    <p className="text-xs text-muted leading-relaxed">
-                      Put your long-form vertical footage in the watched folder. The skill picks one video per run.
-                    </p>
-                  </div>
-
-                  <div className="card p-5 space-y-2">
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center">
-                      <Users size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-medium text-ink lowercase">2. AI clippers work</h3>
-                    <p className="text-xs text-muted leading-relaxed">
-                      Whisper transcribes, Gemini 3 Flash spots viral beats, FFmpeg cuts each clip and adds a hook overlay.
-                    </p>
-                  </div>
-
-                  <div className="card p-5 space-y-2">
-                    <div className="w-10 h-10 rounded-input bg-paper3 flex items-center justify-center">
-                      <CheckCircle2 size={18} className="text-brass" />
-                    </div>
-                    <h3 className="font-medium text-ink lowercase">3. You validate, it ships</h3>
-                    <p className="text-xs text-muted leading-relaxed">
-                      Approve the candidates you like and the skill auto-publishes them to TikTok, Reels and YouTube Shorts via Upload-Post.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Repo CTA */}
-                <div className="card p-6 md:p-8 space-y-5">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <h2 className="font-display lowercase text-xl text-ink mb-1">skill-autoshorts</h2>
-                      <p className="text-sm text-muted">
-                        The Claude Code skill that powers this workflow. Install it once and trigger it whenever you want a fresh batch of clips.
-                      </p>
-                    </div>
-                    <a
-                      href="https://github.com/mutonby/skill-autoshorts"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary py-2 px-4 text-sm shrink-0"
-                    >
-                      View on GitHub <ExternalLink size={14} />
-                    </a>
-                  </div>
-
-                  <div className="bg-paper border border-rule rounded-card p-4 font-mono text-xs text-ink2 flex items-center justify-between gap-3">
-                    <span className="truncate">git clone https://github.com/mutonby/skill-autoshorts</span>
-                    <button
-                      onClick={() => navigator.clipboard.writeText('git clone https://github.com/mutonby/skill-autoshorts')}
-                      className="text-muted hover:text-ink transition-colors shrink-0"
-                      title="Copy"
-                    >
-                      <Copy size={14} />
-                    </button>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-start gap-2 text-ink2">
-                      <Check size={16} className="text-brass shrink-0 mt-0.5" />
-                      <span>Daily batch — picks one long video per run</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-ink2">
-                      <Check size={16} className="text-brass shrink-0 mt-0.5" />
-                      <span>Whisper transcription with word-level timing</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-ink2">
-                      <Check size={16} className="text-brass shrink-0 mt-0.5" />
-                      <span>Gemini 3 Flash multimodal moment detection</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-ink2">
-                      <Check size={16} className="text-brass shrink-0 mt-0.5" />
-                      <span>Auto-publish to TikTok, Reels & YouTube Shorts</span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
           {/* View: UGC Gallery */}
           {activeTab === 'ugc-gallery' && (
             <div className="h-full overflow-y-auto custom-scrollbar animate-fade">
               <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
-                <UGCGallery />
+                <UGCGallery
+                  userResults={status === 'complete' ? results : null}
+                  onCreateClips={() => goToTab('dashboard')}
+                />
               </div>
             </div>
           )}
@@ -2729,7 +2571,7 @@ function App() {
       >
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            OpenShorts needs both a <strong className="text-ink2">Gemini</strong> API key and an <strong className="text-ink2">Upload-Post</strong> API key. Both have free tiers.
+            Clipper needs both a <strong className="text-ink2">Gemini</strong> API key and an <strong className="text-ink2">Upload-Post</strong> API key. Both have free tiers.
           </p>
 
           {/* Gemini block */}

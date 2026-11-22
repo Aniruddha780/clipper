@@ -247,21 +247,64 @@ const substituteAnalyticsEnv = (html, env) => {
     .replace(/%VITE_OPENPANEL_CLIENT_ID%/g, value('OPENPANEL_CLIENT_ID'))
 }
 
+const DEV_ENTRIES = {
+  'tool-transcript': '/tools/transcript.js',
+  'tool-metadata': '/tools/metadata.js',
+  'tool-vertical': '/tools/vertical.js',
+  'tool-paste-link': '/tools/paste-link.js',
+}
+
 export default function seoPlugin() {
   const pages = buildPages()
+  const legal = legalPages()
   // Every path that gets a page, for the footer's optional entries (render.js).
-  const built = new Set(pages.concat(legalPages()).map((p) => p.path))
+  const built = new Set(pages.concat(legal).map((p) => p.path))
   let env = {}
+  let isBuild = false
 
   return {
     name: 'openshorts-seo',
-    apply: 'build',
 
     configResolved(config) {
+      isBuild = config.command === 'build'
       env = loadEnv(config.mode, config.envDir, 'VITE_')
     },
 
+    configureServer(server) {
+      const devRoutes = new Map()
+      for (const page of pages) {
+        const entry = page.tool ? page.tool.entry : page.pasteLink ? PASTE_LINK_ENTRY : null
+        devRoutes.set(page.path, () =>
+          substituteAnalyticsEnv(
+            renderPage(page, relatedFor(page, pages), {
+              toolScript: entry ? DEV_ENTRIES[entry] || '' : '',
+              built,
+            }),
+            env
+          )
+        )
+      }
+      for (const page of legal) {
+        devRoutes.set(page.path, () =>
+          substituteAnalyticsEnv(renderPage(page, [], { cta: false, built }), env)
+        )
+      }
+
+      server.middlewares.use((req, res, next) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+        const rawPath = (req.url || '/').split('?')[0]
+        const cleanPath = rawPath.length > 1 ? rawPath.replace(/\/+$/, '') : rawPath
+        const render = devRoutes.get(cleanPath)
+        if (!render) return next()
+        const html = render()
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.end(req.method === 'HEAD' ? '' : html)
+      })
+    },
+
     transformIndexHtml(html) {
+      if (!isBuild) return html
       if (!html.includes('<div id="root"></div>')) {
         // Fail loudly rather than shipping an empty homepage to AI crawlers
         // again. If the root element is renamed this must be updated with it.

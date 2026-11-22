@@ -228,7 +228,9 @@ export default function PricingPage({ onRequireLogin }) {
           </div>
 
           <div className="divide-y divide-rule border-b border-rule">
-            {HOSTED_VS_SELF.map(({ icon: Icon, label, hosted, self }) => (
+            {HOSTED_VS_SELF.map((row) => {
+              const { icon: Icon, label, hosted, self } = row;
+              return (
               <div key={label} className="py-4 grid gap-2 md:grid-cols-[9rem_1fr_1fr] md:gap-x-6 md:items-start">
                 <div className="flex items-center gap-2 text-ink2">
                   <Icon size={15} className="text-muted shrink-0" />
@@ -246,7 +248,8 @@ export default function PricingPage({ onRequireLogin }) {
                   <p className="text-sm text-muted leading-relaxed">{self}</p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">

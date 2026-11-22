@@ -49,13 +49,14 @@ const DOCS = [
 
 export default function Legal() {
     const handleBack = () => {
-        window.location.hash = '';
+        if (window.history.length > 1) window.history.back();
+        else window.location.hash = '';
     };
 
     return (
         <div className="min-h-screen bg-paper text-ink2">
             <header className="border-b border-rule sticky top-0 bg-paper z-10">
-                <div className="max-w-[65ch] mx-auto px-6 py-3 flex items-center">
+                <div className="px-4 sm:px-6 py-3 flex items-center">
                     <button onClick={handleBack} className="btn-quiet">
                         <ArrowLeft size={16} /> Back
                     </button>
@@ -81,7 +82,9 @@ export default function Legal() {
                 </div>
 
                 <div className="space-y-3 mb-12">
-                    {DOCS.map(({ icon: Icon, title, desc, href, es }) => (
+                    {DOCS.map((doc) => {
+                        const { icon: Icon, title, desc, href, es } = doc;
+                        return (
                         <a
                             key={href}
                             href={href}
@@ -96,7 +99,8 @@ export default function Legal() {
                                 </span>
                             </span>
                         </a>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <p className="text-sm text-muted">

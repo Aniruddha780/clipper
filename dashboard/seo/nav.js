@@ -90,14 +90,11 @@ export const NAV_GROUPS = [
  * Landing.jsx). The static /pricing page (seo/pricing-page.js) is linked from
  * the footers only. The plan picker and checkout stay at the hash route
  * #/pricing?plan=..., a different thing: nginx sends /pricing?plan=... there. */
-export const NAV_LINKS = [
-  { href: '/#pricing', label: { en: 'Pricing', es: 'Precios' } },
-  { href: '/self-hosted-ai-clip-maker', label: { en: 'Open source', es: 'Código abierto' } },
-]
+export const NAV_LINKS = []
 
 export const NAV_STRINGS = {
-  en: { cta: 'Get free clips', ctaHint: 'First video free up to 60 min, no card. No watermark from $12/month, or self-host free (MIT).', openApp: 'Open app', login: 'Log in', menu: 'Menu', main: 'Main', github: 'OpenShorts on GitHub' },
-  es: { cta: 'Clips gratis', ctaHint: 'Primer vídeo gratis hasta 60 min, sin tarjeta. Sin marca de agua desde 12 $/mes, o autoalojado gratis (MIT).', openApp: 'Abrir la app', login: 'Iniciar sesión', menu: 'Menú', main: 'Principal', github: 'OpenShorts en GitHub' },
+  en: { back: 'back', cta: 'Get free clips', ctaHint: 'First video free up to 60 min, no card. No watermark from $12/month, or self-host free (MIT).', openApp: 'Open app', login: 'Log in', menu: 'Menu', main: 'Main', github: 'OpenShorts on GitHub' },
+  es: { back: 'volver', cta: 'Clips gratis', ctaHint: 'Primer vídeo gratis hasta 60 min, sin tarjeta. Sin marca de agua desde 12 $/mes, o autoalojado gratis (MIT).', openApp: 'Abrir la app', login: 'Iniciar sesión', menu: 'Menú', main: 'Principal', github: 'OpenShorts en GitHub' },
 }
 
 const pick = (v, lang) => (v && typeof v === 'object' ? v[lang] || v.en : v)
@@ -110,7 +107,6 @@ const esc = (s) =>
     .replace(/"/g, '&quot;')
 
 const CHEVRON = '<svg class="osn-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
-const GITHUB = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>'
 const BURGER = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
 
 /* The header markup. `signedIn` is only ever true in the React landing, which
@@ -130,11 +126,12 @@ export function renderNav({ lang = 'en', signedIn = false, showLogin = true } = 
   const login = signedIn || !showLogin ? '' : `<a class="osn-login" href="${LOGIN_HREF}">${esc(t.login)}</a>`
   return `<header class="osn" data-osn>
 <div class="osn-bar">
-  <a class="osn-brand" href="/"><img src="/logo-openshorts.png" alt="OpenShorts logo" width="28" height="28"><span>openshorts</span></a>
+  <button type="button" class="osn-back" data-osn-back aria-label="${esc(t.back)}" title="${esc(t.back)}">&larr; <span>${esc(t.back)}</span></button>
+  <a class="osn-brand" href="/"><span>clipper</span></a>
   <input type="checkbox" id="osn-toggle" class="osn-toggle" aria-label="${esc(t.menu)}">
   <label for="osn-toggle" class="osn-burger" title="${esc(t.menu)}">${BURGER}</label>
   <nav class="osn-menu" aria-label="${esc(t.main)}">
-    <ul class="osn-list">${groups}${links}<li class="osn-item"><a class="osn-top osn-gh" href="${REPO_URL}" rel="noopener" aria-label="${esc(t.github)}" title="GitHub">${GITHUB}<span class="osn-gh-label">GitHub</span></a></li></ul>
+    <ul class="osn-list">${groups}${links}</ul>
     ${login}
   </nav>
   <a class="osn-cta" href="${APP_HREF}"${signedIn ? '' : ` title="${esc(t.ctaHint)}"`}>${esc(signedIn ? t.openApp : t.cta)}</a>
@@ -146,21 +143,26 @@ export function renderNav({ lang = 'en', signedIn = false, showLogin = true } = 
  * so the same block works inside the SPA and on the static pages, which load
  * neither Tailwind nor each other's variables. */
 export const NAV_CSS = `
-.osn{position:sticky;top:0;z-index:50;background:oklch(13% 0.014 265);border-bottom:1px solid oklch(96% 0.006 262 / .08);
+.osn{position:sticky;top:0;z-index:50;background:rgb(255 255 255 / 0.95);backdrop-filter:blur(8px);border-bottom:1px solid rgb(148 163 184 / .22);
   font-family:"Geist",ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:.875rem;line-height:1.4}
 .osn *{box-sizing:border-box}
 .osn a{text-decoration:none}
 .osn-bar{max-width:72rem;margin:0 auto;padding:0 1.5rem;height:4rem;display:flex;align-items:center;gap:1.5rem;position:relative}
-.osn-brand{display:flex;align-items:center;gap:.6rem;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:1.25rem;
-  letter-spacing:-.01em;color:oklch(96% 0.006 262);text-transform:lowercase;white-space:nowrap;flex-shrink:0}
+.osn-back{display:inline-flex;align-items:center;gap:.3rem;background:transparent;border:1px solid rgb(148 163 184 / .32);color:#475569;
+  border-radius:8px;padding:.35rem .65rem;font:inherit;font-size:.8rem;line-height:1.2;text-transform:lowercase;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;transition:color .15s,border-color .15s,background .15s}
+.osn-back:hover{color:#2563eb;border-color:#2563eb;background:#f8fafc}
+.osn-back:focus-visible{outline:2px solid #2563eb;outline-offset:3px;border-radius:8px}
+.osn-brand{display:flex;align-items:center;gap:.6rem;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:1.35rem;
+  letter-spacing:-.01em;color:#2563eb;text-transform:lowercase;white-space:nowrap;flex-shrink:0}
 .osn-brand img{width:28px;height:28px;display:block}
 .osn-menu{flex:1;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;min-width:0}
 .osn-list{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:1.4rem}
 .osn-item{margin:0;position:relative}
-.osn-top,.osn-dd>summary,.osn-login{color:oklch(64% 0.012 262);text-transform:lowercase;white-space:nowrap;cursor:pointer;transition:color .15s}
-.osn-top:hover,.osn-dd>summary:hover,.osn-dd[open]>summary,.osn-login:hover{color:oklch(96% 0.006 262)}
+.osn-top,.osn-dd>summary,.osn-login{color:#475569;text-transform:lowercase;white-space:nowrap;cursor:pointer;transition:color .15s}
+.osn-top:hover,.osn-dd>summary:hover,.osn-dd[open]>summary,.osn-login:hover{color:#2563eb}
 .osn-top:focus-visible,.osn-dd>summary:focus-visible,.osn-login:focus-visible,.osn-cta:focus-visible,.osn-brand:focus-visible,
-.osn-panel a:focus-visible{outline:2px solid oklch(76% 0.17 50);outline-offset:3px;border-radius:4px}
+.osn-panel a:focus-visible{outline:2px solid #2563eb;outline-offset:3px;border-radius:4px}
 .osn-dd>summary{list-style:none;display:flex;align-items:center;gap:.3rem;user-select:none}
 .osn-dd>summary::-webkit-details-marker{display:none}
 .osn-chev{transition:transform .15s;opacity:.8}
@@ -168,37 +170,38 @@ export const NAV_CSS = `
 .osn-gh{display:flex;align-items:center}
 .osn-gh-label{display:none}
 .osn-panel{list-style:none;margin:0;padding:.4rem;position:absolute;top:calc(100% + 1.1rem);left:-.9rem;min-width:16rem;
-  background:oklch(16.5% 0.015 265);border:1px solid oklch(96% 0.006 262 / .14);border-radius:10px;
-  box-shadow:0 18px 40px -12px rgb(0 0 0 / .6)}
+  background:#ffffff;border:1px solid rgb(148 163 184 / .28);border-radius:10px;
+  box-shadow:0 18px 40px -12px rgb(15 23 42 / .14)}
 .osn-panel li{margin:0}
-.osn-panel a{display:block;padding:.5rem .7rem;border-radius:7px;color:oklch(86% 0.01 262);text-transform:lowercase;white-space:nowrap}
-.osn-panel a:hover{background:oklch(20% 0.016 265);color:oklch(96% 0.006 262)}
-.osn-panel small{display:block;font-size:.75rem;color:oklch(64% 0.012 262)}
-.osn-cta{background:oklch(76% 0.17 50);color:oklch(17% 0.03 50);padding:.5rem 1.1rem;border-radius:8px;font-weight:500;
+.osn-panel a{display:block;padding:.5rem .7rem;border-radius:7px;color:#334155;text-transform:lowercase;white-space:nowrap}
+.osn-panel a:hover{background:#f1f5f9;color:#2563eb}
+.osn-panel small{display:block;font-size:.75rem;color:#64748b}
+.osn-cta{background:#2563eb;color:#ffffff;padding:.5rem 1.1rem;border-radius:8px;font-weight:500;
   white-space:nowrap;text-transform:lowercase;flex-shrink:0;transition:filter .15s}
-.osn-cta:hover{filter:brightness(1.08);color:oklch(17% 0.03 50)}
+.osn-cta:hover{filter:brightness(1.08);color:#ffffff}
 .osn-toggle{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;margin:0}
-.osn-burger{display:none;color:oklch(86% 0.01 262);cursor:pointer;padding:.4rem;margin-right:-.4rem;border-radius:6px}
-.osn-toggle:focus-visible+.osn-burger{outline:2px solid oklch(76% 0.17 50);outline-offset:2px}
+.osn-burger{display:none;color:#334155;cursor:pointer;padding:.4rem;margin-right:-.4rem;border-radius:6px}
+.osn-toggle:focus-visible+.osn-burger{outline:2px solid #2563eb;outline-offset:2px}
 @media (min-width:64rem) and (max-width:74.99rem){.osn-bar{gap:1rem}.osn-menu{gap:1rem}.osn-list{gap:1rem}}
 @media (max-width:63.99rem){
-  .osn-bar{padding:0 1rem;gap:.75rem}
-  .osn-brand{margin-right:auto;font-size:1.1rem}
+  .osn-bar{padding:0 1rem;gap:.6rem}
+  .osn-back{padding:.35rem .55rem}
+  .osn-brand{margin-right:auto;font-size:1.15rem}
   .osn-cta{order:2;padding:.45rem .85rem}
   .osn-burger{display:flex;order:3}
   .osn-menu{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;
-    background:oklch(13% 0.014 265);border-bottom:1px solid oklch(96% 0.006 262 / .14);padding:.5rem 1rem 1rem;
+    background:#ffffff;border-bottom:1px solid rgb(148 163 184 / .25);padding:.5rem 1rem 1rem;
     max-height:calc(100dvh - 4rem);overflow-y:auto}
   .osn-toggle:checked~.osn-menu{display:flex}
   .osn-list{flex-direction:column;align-items:stretch;gap:0}
-  .osn-item{border-bottom:1px solid oklch(96% 0.006 262 / .08)}
-  .osn-top,.osn-dd>summary{display:flex;justify-content:space-between;padding:.85rem .25rem;font-size:1rem;color:oklch(86% 0.01 262)}
+  .osn-item{border-bottom:1px solid rgb(148 163 184 / .16)}
+  .osn-top,.osn-dd>summary{display:flex;justify-content:space-between;padding:.85rem .25rem;font-size:1rem;color:#334155}
   .osn-gh{justify-content:flex-start;gap:.5rem}
   .osn-gh-label{display:inline}
   .osn-panel{position:static;min-width:0;border:0;box-shadow:none;background:transparent;padding:0 0 .6rem}
   .osn-panel a{white-space:normal;padding:.55rem .5rem}
-  .osn-login{display:block;text-align:center;margin-top:1rem;padding:.7rem;border:1px solid oklch(96% 0.006 262 / .14);border-radius:8px;
-    color:oklch(86% 0.01 262);font-size:1rem}
+  .osn-login{display:block;text-align:center;margin-top:1rem;padding:.7rem;border:1px solid rgb(148 163 184 / .3);border-radius:8px;
+    color:#334155;font-size:1rem}
 }
 @media (prefers-reduced-motion:reduce){.osn-chev,.osn-cta,.osn-top{transition:none}}
 `
@@ -226,10 +229,17 @@ export function wireNav(h) {
     const tg = h.querySelector('.osn-toggle')
     if (tg && tg.checked) tg.checked = false
   }
+  const backBtn = h.querySelector('[data-osn-back]')
+  const onBack = () => {
+    if (window.history.length > 1) window.history.back()
+    else window.location.href = '/'
+  }
+  if (backBtn) backBtn.addEventListener('click', onBack)
   h.addEventListener('toggle', onToggle, true)
   document.addEventListener('click', onClick)
   document.addEventListener('keydown', onKey)
   return () => {
+    if (backBtn) backBtn.removeEventListener('click', onBack)
     h.removeEventListener('toggle', onToggle, true)
     document.removeEventListener('click', onClick)
     document.removeEventListener('keydown', onKey)
@@ -240,6 +250,7 @@ export function wireNav(h) {
  * taken from wireNav.toString(): the build may transform that function, and the
  * inline script has to be plain ES5 that runs anywhere. No CSP is sent. */
 export const NAV_SCRIPT = `<script>(function(){var h=document.querySelector('[data-osn]');if(!h)return;
+var b=h.querySelector('[data-osn-back]');if(b)b.addEventListener('click',function(){if(window.history.length>1)window.history.back();else window.location.href='/'});
 function dds(){return Array.prototype.slice.call(h.querySelectorAll('[data-osn-dd]'))}
 h.addEventListener('toggle',function(e){if(!e.target.open)return;dds().forEach(function(d){if(d!==e.target)d.open=false})},true);
 document.addEventListener('click',function(e){dds().forEach(function(d){if(d.open&&!d.contains(e.target))d.open=false})});
