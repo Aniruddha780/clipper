@@ -52,3 +52,4 @@ CLAUDE.local.md
 
 # Rust build output
 osrender/target/
+node_modules

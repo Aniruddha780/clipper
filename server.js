@@ -9,6 +9,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,7 @@ const DIST_DIR = path.join(DASHBOARD_DIR, 'dist');
 const DEMO_DIR = path.join(DASHBOARD_DIR, 'public', 'demo');
 const SCREENS_DIR = path.join(DASHBOARD_DIR, 'public', 'screens');
 
-const TMP_BASE = '/tmp/openshorts';
+const TMP_BASE = process.env.CLIPPER_TMP_DIR || path.join(os.tmpdir(), 'openshorts');
 const UPLOAD_DIR = path.join(TMP_BASE, 'uploads');
 const OUTPUT_DIR = path.join(TMP_BASE, 'output');
 const THUMBNAILS_DIR = path.join(OUTPUT_DIR, 'thumbnails');
@@ -60,6 +61,8 @@ function formatClipForGallery(job, clip, idx) {
     caption: clip.video_description_for_tiktok || clip.why || '',
     hashtags: [],
     created_at: job.createdAt || Date.now(),
+    session_title: job.metadata?.source_video || 'Clip session',
+    session_status: job.status,
   };
 }
 
@@ -120,6 +123,24 @@ function resolveGeminiKey(req) {
   return key || null;
 }
 
+function execJobFile(job, command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    let child;
+    child = execFile(command, args, options, (error, stdout, stderr) => {
+      if (job.activeProcess === child) job.activeProcess = null;
+      if (error) {
+        error.stdout = stdout;
+        error.stderr = stderr;
+        reject(error);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+    job.activeProcess = child;
+    if (job.stopRequested) child.kill();
+  });
+}
+
 function getGenAI(apiKey) {
   if (!apiKey) return null;
   return new GoogleGenAI({ apiKey });
@@ -171,7 +192,40 @@ async function ffprobeVideoInfo(filePath) {
   }
 }
 
-async function cutClipWithFfmpeg(sourcePath, outPath, startSec, durationSec, outputFormat = 'vertical', cropOffsetFrac = 0.5) {
+async function downloadVideoUrl(videoUrl, job) {
+  let parsed;
+  try {
+    parsed = new URL(videoUrl);
+  } catch {
+    throw new Error('Enter a valid video URL.');
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error('Only http and https video URLs are supported.');
+  }
+
+  const downloadId = crypto.randomUUID();
+  const outTemplate = path.join(UPLOAD_DIR, `${downloadId}.%(ext)s`);
+  await execJobFile(job, process.env.YTDLP_BIN || 'yt-dlp', [
+    '--no-playlist',
+    '--no-warnings',
+    '--restrict-filenames',
+    '-f', 'best[ext=mp4]/best',
+    '-o', outTemplate,
+    parsed.toString(),
+  ], { timeout: 10 * 60 * 1000, maxBuffer: 10 * 1024 * 1024 });
+
+  const prefix = `${downloadId}.`;
+  const downloaded = fs.readdirSync(UPLOAD_DIR)
+    .filter((name) => name.startsWith(prefix))
+    .map((name) => path.join(UPLOAD_DIR, name))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
+  if (!downloaded || !fs.existsSync(downloaded)) {
+    throw new Error('The video link could not be downloaded.');
+  }
+  return downloaded;
+}
+
+async function cutClipWithFfmpeg(sourcePath, outPath, startSec, durationSec, outputFormat = 'vertical', cropOffsetFrac = 0.5, job = null) {
   let vf = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
   if (outputFormat === 'square') {
     vf = 'scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080';
@@ -182,7 +236,7 @@ async function cutClipWithFfmpeg(sourcePath, outPath, startSec, durationSec, out
     vf = `scale=-2:1920,crop=1080:1920:(iw-1080)*${clamped.toFixed(3)}:0`;
   }
 
-  await execFileAsync('ffmpeg', [
+  const args = [
     '-y',
     '-ss', String(Math.max(0, startSec)),
     '-i', sourcePath,
@@ -195,7 +249,10 @@ async function cutClipWithFfmpeg(sourcePath, outPath, startSec, durationSec, out
     '-b:a', '96k',
     '-movflags', '+faststart',
     outPath,
-  ], { timeout: 120000 });
+  ];
+  await (job
+    ? execJobFile(job, 'ffmpeg', args, { timeout: 120000 })
+    : execFileAsync('ffmpeg', args, { timeout: 120000 }));
 }
 
 function buildWordsForClip(clipText, startSec, endSec) {
@@ -450,9 +507,10 @@ app.get('/api/config', (_req, res) => {
     billingEnabled: false,
     googleAuthEnabled: false,
     jobRetentionSeconds: 86400,
-    localLlm: process.env.GEMINI_API_KEY
-      ? { provider: 'gemini', model: 'gemini-2.5-flash' }
-      : null,
+    localLlm: {
+      provider: process.env.GEMINI_API_KEY ? 'gemini' : 'basic',
+      model: process.env.GEMINI_API_KEY ? 'gemini-2.5-flash' : 'local-fallback',
+    },
   });
 });
 
@@ -533,6 +591,13 @@ async function runClipJob(jobId, opts) {
 
   try {
     appendJobLog(job, '🔍 Inspecting source media...');
+    if (opts.url && !opts.sourcePath) {
+      appendJobLog(job, '⬇️ Downloading the pasted video link...');
+      opts.sourcePath = await downloadVideoUrl(opts.url, job);
+      job.sourcePath = opts.sourcePath;
+      appendJobLog(job, '✅ Video downloaded, inspecting source media...');
+    }
+    if (job.stopRequested) throw new Error('Session stopped');
     let sourceDuration = 60;
     let sourceInfo = { width: 1280, height: 720, duration: 60 };
     if (opts.sourcePath && fs.existsSync(opts.sourcePath)) {
@@ -552,12 +617,22 @@ async function runClipJob(jobId, opts) {
       desiredCount,
       sourceDuration,
     );
+    if (job.stopRequested) throw new Error('Session stopped');
 
     const transcriptSegments = [];
     const clips = [];
     const autoHookEnabled = opts.autoHook !== '0' && opts.autoHook !== false;
+    job.metadata = {
+      source_video: opts.sourcePath ? path.basename(opts.sourcePath) : null,
+      source_path: opts.sourcePath || null,
+      source_info: sourceInfo,
+      output_format: opts.outputFormat || 'vertical',
+      transcript: { language: 'en', segments: transcriptSegments },
+      shorts: clips,
+    };
 
     for (let i = 0; i < moments.length; i += 1) {
+      if (job.stopRequested) throw new Error('Session stopped');
       const m = moments[i];
       const clipName = `clip_${i + 1}.mp4`;
       const clipPath = path.join(jobDir, clipName);
@@ -571,8 +646,11 @@ async function runClipJob(jobId, opts) {
             m.start,
             Math.max(8, m.end - m.start),
             opts.outputFormat,
+            0.5,
+            job,
           );
         } catch (ffErr) {
+          if (job.stopRequested) throw ffErr;
           console.warn('[OpenShorts] ffmpeg cut failed, falling back to demo clip:', ffErr?.message);
           const demoSrc = await ensureDemoClip(DEMO_CLIPS[i % DEMO_CLIPS.length]);
           if (demoSrc && fs.existsSync(demoSrc)) await fsp.copyFile(demoSrc, clipPath);
@@ -611,24 +689,20 @@ async function runClipJob(jobId, opts) {
       });
 
       job.result = { clips: [...clips] };
+      syncJobToGallery(job);
     }
 
-    job.metadata = {
-      source_video: opts.sourcePath ? path.basename(opts.sourcePath) : null,
-      source_path: opts.sourcePath || null,
-      source_info: sourceInfo,
-      output_format: opts.outputFormat || 'vertical',
-      transcript: {
-        language: 'en',
-        segments: transcriptSegments,
-      },
-      shorts: clips,
-    };
+    if (job.stopRequested) throw new Error('Session stopped');
 
     appendJobLog(job, `✅ Generated ${clips.length} clips ready to edit and export.`);
     job.status = 'completed';
     syncJobToGallery(job);
   } catch (err) {
+    if (job.stopRequested) {
+      job.status = 'stopped';
+      syncJobToGallery(job);
+      return;
+    }
     console.error('[OpenShorts] Job error:', err);
     appendJobLog(job, `Error: ${err?.message || 'Processing failed'}`);
     job.status = 'failed';
@@ -707,6 +781,28 @@ app.get('/api/status/:jobId', (req, res) => {
     queue: null,
     partial: null,
     error: job.error || null,
+  });
+});
+
+app.post('/api/jobs/:jobId/stop', (req, res) => {
+  const { jobId } = req.params;
+  if (!isSafeId(jobId)) return res.status(400).json({ detail: 'Invalid job id' });
+  const job = jobs.get(jobId);
+  if (!job) return res.status(404).json({ detail: 'Session not found' });
+
+  if (job.status === 'processing' || job.status === 'queued') {
+    job.stopRequested = true;
+    job.status = 'stopped';
+    appendJobLog(job, '⏹️ Session stopped by user.');
+    if (job.activeProcess && !job.activeProcess.killed) job.activeProcess.kill('SIGTERM');
+    syncJobToGallery(job);
+  }
+
+  res.json({
+    status: job.status,
+    result: job.result,
+    logs: job.logs,
+    log_times: job.log_times,
   });
 });
 

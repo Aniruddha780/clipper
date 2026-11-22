@@ -3,7 +3,7 @@ import { Film, Download, Copy, Check, Loader2, Play } from 'lucide-react';
 import { getApiUrl } from '../config';
 import Modal from './ui/Modal';
 
-export default function UGCGallery({ userResults = null, onCreateClips = null }) {
+export default function UGCGallery({ userResults = null, jobId = null, sessionStatus = 'completed', onCreateClips = null }) {
   const [serverVideos, setServerVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState('');
@@ -38,7 +38,10 @@ export default function UGCGallery({ userResults = null, onCreateClips = null })
         const end = Number(clip.end) || start + 20;
         byUrl.set(clip.video_url, {
           video_id: `session_${idx}_${clip.video_url}`,
+          job_id: jobId,
           title: clip.video_title_for_youtube_short || `Clip ${idx + 1}`,
+          session_title: 'Current clip session',
+          session_status: sessionStatus,
           video_url: clip.video_url,
           actor_url: null,
           duration: Math.max(1, Math.round(end - start)),
@@ -49,7 +52,17 @@ export default function UGCGallery({ userResults = null, onCreateClips = null })
       });
     }
     return Array.from(byUrl.values());
-  }, [serverVideos, userResults]);
+  }, [jobId, serverVideos, sessionStatus, userResults]);
+
+  const sessions = useMemo(() => {
+    const groups = new Map();
+    for (const video of videos) {
+      const id = video.job_id || 'other';
+      if (!groups.has(id)) groups.set(id, []);
+      groups.get(id).push(video);
+    }
+    return Array.from(groups.entries());
+  }, [videos]);
 
   const handleCopy = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -89,16 +102,35 @@ export default function UGCGallery({ userResults = null, onCreateClips = null })
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {videos.map((video) => (
-            <VideoCard
-              key={video.video_id || video.video_url}
-              video={video}
-              copied={copied}
-              onCopy={handleCopy}
-              onOpen={() => setSelected(video)}
-            />
-          ))}
+        <div className="space-y-8">
+          {sessions.map(([sessionId, sessionVideos]) => {
+            const session = sessionVideos[0];
+            const status = session.session_status || 'completed';
+            return (
+              <section key={sessionId} aria-label={`${session.session_title || 'Clip session'} gallery`}>
+                <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-rule pb-2">
+                  <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+                    {session.session_title || 'Clip session'}
+                  </h3>
+                  <span className={status === 'stopped' ? 'badge-warn' : status === 'processing' ? 'badge-brass' : 'badge-ok'}>
+                    {status}
+                  </span>
+                  <span className="readout">{sessionVideos.length} clips</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {sessionVideos.map((video) => (
+                    <VideoCard
+                      key={video.video_id || video.video_url}
+                      video={video}
+                      copied={copied}
+                      onCopy={handleCopy}
+                      onOpen={() => setSelected(video)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
 

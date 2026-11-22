@@ -373,6 +373,20 @@ function useSmoothSectionLinks() {
 export default function Landing({ onLaunchApp }) {
   useScrollToHashSection();
   useSmoothSectionLinks();
+  // #layout is the home/clipper route, not a section inside a document. On
+  // direct loads and hash changes it must always open at the viewport origin;
+  // otherwise mobile browsers restore a previous deep page position.
+  React.useEffect(() => {
+    const showLayoutOrigin = () => {
+      if (window.location.hash !== '#layout') return;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      });
+    };
+    showLayoutOrigin();
+    window.addEventListener('hashchange', showLayoutOrigin);
+    return () => window.removeEventListener('hashchange', showLayoutOrigin);
+  }, []);
   const [openFaq, setOpenFaq] = React.useState(null);
   // Start from whatever was typed into the static paste box of the crawler
   // fallback (seo/landing-fallback.js) before this component mounted: the
@@ -568,8 +582,8 @@ export default function Landing({ onLaunchApp }) {
       <SiteNav className="fixed top-0 w-full z-50" />
 
       {/* Hero — Marquee Hero: blueprint grid, content left, apparatus right */}
-      <section className="hero-blueprint relative overflow-clip border-b border-rule pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-14 items-center">
+      <section id="layout" className="hero-blueprint relative overflow-clip border-b border-rule pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-8 sm:gap-10 lg:gap-14 items-center">
           <div className="min-w-0">
             <h1 className="hero-h1 mb-6">
               <span className="block">free ai clip maker:</span>{' '}

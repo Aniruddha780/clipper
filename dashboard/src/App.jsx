@@ -258,6 +258,7 @@ const UserProfileSelector = ({ profiles, selectedUserId, onSelect, onConnect }) 
 };
 
 const SESSION_KEY = 'openshorts_session';
+const STOPPED_SESSION_KEY = 'openshorts_stopped_session';
 
 // The server's own explanation for a rejected/failed job, readable: FastAPI
 // answers {"detail": "..."} or {"detail": {"message": ...}}. Showing the raw
@@ -418,6 +419,9 @@ function App() {
   const [noSource, setNoSource] = useState(false);
 
   const [sessionRecovered, setSessionRecovered] = useState(false);
+  const [stopNotice, setStopNotice] = useState('');
+  const [stopError, setStopError] = useState('');
+  const [stoppingSession, setStoppingSession] = useState(false);
   // The job a restored session was polling is no longer on the server.
   const [jobGone, setJobGone] = useState(false);
   const [showScheduleWeek, setShowScheduleWeek] = useState(false);
@@ -768,6 +772,12 @@ function App() {
       const saved = localStorage.getItem(SESSION_KEY);
       if (!saved) return;
       const session = JSON.parse(saved);
+      const stoppedSession = JSON.parse(localStorage.getItem(STOPPED_SESSION_KEY) || 'null');
+      if (session.status === 'stopped' || stoppedSession?.jobId === session.jobId) {
+        localStorage.removeItem(SESSION_KEY);
+        setStopNotice('Your previous session was stopped. Any finished clips are saved in Gallery.');
+        return;
+      }
       if (Date.now() - session.timestamp > SESSION_MAX_AGE) {
         localStorage.removeItem(SESSION_KEY);
         return;
@@ -948,6 +958,12 @@ function App() {
             setStatus('complete');
             stop();
             refreshMe();
+          } else if (data.status === 'stopped') {
+            setQueueInfo(null);
+            localStorage.setItem(STOPPED_SESSION_KEY, JSON.stringify({ jobId, timestamp: Date.now() }));
+            setStatus('stopped');
+            setStopNotice('Session stopped. Any finished clips are saved in Gallery.');
+            stop();
           } else if (data.status === 'failed') {
             setStatus('error');
             const errorMsg = data.error || (data.logs && data.logs.length > 0 ? data.logs[data.logs.length - 1] : "Process failed");
@@ -1019,7 +1035,9 @@ function App() {
   // A self-hosted server running the moment picker on a local LLM
   // (LLM_BASE_URL) does not need a Gemini key for the core pipeline.
   const geminiOk = !!apiKey || !!localLlm;
-  const keysMissing = !billingEnabled && (!geminiOk || !uploadPostKey);
+  // Gemini and Upload-Post are optional integrations for the local app.
+  // Clipping and downloading clips work with FFmpeg alone.
+  const keysMissing = false;
   const needsPlan = billingEnabled && !isManaged;   // hosted, signed-out or no active plan/trial
 
   // Fresh sign-up: Clip Generator tutorial (AuthContext set os_show_clip_tutorial
@@ -1252,6 +1270,8 @@ function App() {
     }
     // Past every gate, so this request is really running: nothing left to resume.
     clearPendingJob();
+    setStopNotice('');
+    setStopError('');
     setStatus('processing');
     setJobError('');
     setLogs(["Starting process..."]);
@@ -1416,6 +1436,8 @@ function App() {
 
   const handleReset = () => {
     setJobGone(false);
+    setStopNotice('');
+    setStopError('');
     // Flush any pending edit-state sync before dropping the project: the clips
     // themselves are already archived to R2 as they were edited.
     flushClipState();
@@ -1432,6 +1454,33 @@ function App() {
     setQueueInfo(null);
     setJobError('');
     localStorage.removeItem(SESSION_KEY);
+  };
+
+  const handleStopSession = async () => {
+    if (!jobId || stoppingSession) return;
+    setStoppingSession(true);
+    setStopError('');
+    try {
+      const res = await apiFetch(`/api/jobs/${jobId}/stop`, { method: 'POST' });
+      if (!res.ok) throw new Error(readableError(await res.text()));
+      const data = await res.json();
+      if (data.result) setResults(data.result);
+      if (data.logs) setLogs(data.logs);
+      if (data.log_times) setLogTimes(data.log_times);
+      if (data.status === 'completed') {
+        setStatus('complete');
+        setStopNotice('This session finished before it could be stopped. Its clips are saved in Gallery.');
+      } else {
+        localStorage.setItem(STOPPED_SESSION_KEY, JSON.stringify({ jobId, timestamp: Date.now() }));
+        setStatus('stopped');
+        setStopNotice('Session stopped. Any finished clips are saved in Gallery.');
+      }
+      setSessionRecovered(false);
+    } catch (e) {
+      setStopError(readableError(e.message));
+    } finally {
+      setStoppingSession(false);
+    }
   };
   useEffect(() => {
     handleResetRef.current = handleReset;
@@ -1777,6 +1826,30 @@ function App() {
           </div>
         )}
 
+        {stopNotice && (
+          <div role="status" className="mx-3 sm:mx-6 mt-2 px-3.5 sm:px-4 py-3 bg-paper2 border border-rule rounded-card flex items-start justify-between gap-3 animate-fade shrink-0">
+            <div className="flex items-start sm:items-center gap-2 text-sm text-ink2 flex-wrap min-w-0">
+              <Check size={16} className="text-ok shrink-0 mt-0.5 sm:mt-0" />
+              <span>{stopNotice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStopNotice('')}
+              aria-label="Dismiss session notice"
+              className="text-muted hover:text-ink transition-colors shrink-0 -m-1 p-1"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {stopError && (
+          <div role="alert" className="mx-3 sm:mx-6 mt-2 px-3.5 sm:px-4 py-3 bg-paper2 border border-danger/40 rounded-card flex items-start gap-2 text-sm text-danger animate-fade shrink-0">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+            <span>{stopError}</span>
+          </div>
+        )}
+
         {/* The restored job is no longer on the server (purged or not yours). */}
         {jobGone && (
           <div role="status" className="mx-3 sm:mx-6 mt-2 px-3.5 sm:px-4 py-3 bg-paper2 border border-rule rounded-card flex items-start justify-between gap-3 animate-fade shrink-0">
@@ -2044,7 +2117,9 @@ function App() {
             <div className="h-full overflow-y-auto custom-scrollbar animate-fade">
               <div className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
                 <UGCGallery
-                  userResults={status === 'complete' ? results : null}
+                  userResults={status === 'complete' || status === 'stopped' ? results : null}
+                  jobId={jobId}
+                  sessionStatus={status}
                   onCreateClips={() => goToTab('dashboard')}
                 />
               </div>
@@ -2161,7 +2236,7 @@ function App() {
           )}
 
           {/* View: Processing / Results (Split View) */}
-          {activeTab === 'dashboard' && (status === 'processing' || status === 'complete' || status === 'error') && (
+          {activeTab === 'dashboard' && (status === 'processing' || status === 'complete' || status === 'error' || status === 'stopped') && (
             <div className="h-full flex flex-col md:flex-row gap-3 md:gap-4 p-3 md:p-4 overflow-y-auto md:overflow-y-hidden custom-scrollbar animate-fade">
 
               {/* Left Panel: Preview & Status */}
@@ -2171,12 +2246,28 @@ function App() {
                     <Activity className={`text-brass ${status === 'processing' ? 'animate-pulse' : ''}`} size={18} />
                     Live Analysis
                   </h2>
-                  <span className={status === 'processing' ? 'badge-brass' :
-                    status === 'complete' ? 'badge-ok' :
-                      'badge-danger'
-                    }>
-                    {status.toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={status === 'processing' ? 'badge-brass' :
+                      status === 'complete' ? 'badge-ok' :
+                        status === 'stopped' ? 'badge-warn' :
+                          'badge-danger'
+                      }>
+                      {status.toUpperCase()}
+                    </span>
+                    {status === 'processing' && (
+                      <button
+                        type="button"
+                        onClick={handleStopSession}
+                        disabled={stoppingSession}
+                        className="btn-danger px-3 py-1.5 text-xs whitespace-nowrap"
+                        aria-label="Stop this session"
+                      >
+                        {stoppingSession
+                          ? <><Loader2 size={13} className="animate-spin" />stopping…</>
+                          : <><X size={13} />stop session</>}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Trimmed run: say it while it renders, not only once the
@@ -2337,7 +2428,7 @@ function App() {
                       />
                     </div>
                   )}
-                  {results?.clips?.length > 0 && status === 'complete' && (
+                  {results?.clips?.length > 0 && (status === 'complete' || status === 'stopped') && (
                     <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2">
                       <button
                         onClick={handleDownloadAll}
@@ -2362,7 +2453,7 @@ function App() {
                   )}
                 </div>
 
-                {status === 'complete' && results?.clips?.length > 0 && (
+                {(status === 'complete' || status === 'stopped') && results?.clips?.length > 0 && (
                   <div className="mb-2 space-y-2">
                     {/* Partial job: the clips on screen come from the first N
                         minutes only. Say so, and sell the rest of the video. */}
@@ -2540,6 +2631,13 @@ function App() {
                     ) : status === 'error' ? (
                       <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-danger space-y-2">
                         <p>Generation failed.</p>
+                      </div>
+                    ) : status === 'stopped' ? (
+                      <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-muted space-y-3 text-center px-4">
+                        <p>This session was stopped. Finished clips are saved in Gallery.</p>
+                        <button type="button" onClick={() => goToTab('ugc-gallery')} className="btn-ghost px-4 py-2 text-xs">
+                          open gallery
+                        </button>
                       </div>
                     ) : null
                   )}
