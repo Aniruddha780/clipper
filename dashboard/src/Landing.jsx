@@ -298,7 +298,7 @@ const SWITCHING = [
 
 // A landing section anchor (#pricing, #features…), not an app route (#app,
 // #/pricing, #legal…).
-const NOT_SECTIONS = new Set(['app', 'landing', 'legal']);
+const NOT_SECTIONS = new Set(['app', 'landing', 'layout', 'legal']);
 const sectionId = (hash) => {
   const m = /^#([a-z][\w-]*)$/i.exec(hash || '');
   return m && !NOT_SECTIONS.has(m[1]) ? m[1] : null;
@@ -586,25 +586,10 @@ export default function Landing({ onLaunchApp }) {
                 app with it loaded. Sign-in is asked for at generate time, not
                 before the user has seen anything. */}
             <form onSubmit={handleHeroSubmit} className="mb-5">
-              <div className="hero-input-row flex flex-col sm:flex-row items-stretch gap-3">
-                <div className="relative flex-1 min-w-0">
-                  <Link2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                  <input
-                    type="url"
-                    value={heroUrl}
-                    onChange={(e) => setHeroUrl(e.target.value)}
-                    placeholder="paste a video link"
-                    className="input-field pl-11"
-                    aria-label="Video link"
-                  />
-                </div>
+              <div className="hero-input-row flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <button type="submit" className="btn-primary whitespace-nowrap">
                   get free clips
                   <ArrowRight size={16} />
-                </button>
-                <button type="button" onClick={onLaunchApp} className="btn-ghost whitespace-nowrap">
-                  <Upload size={16} />
-                  upload a file
                 </button>
               </div>
             </form>

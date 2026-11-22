@@ -34,6 +34,7 @@ import { track } from './lib/analytics';
 import { readConnectReturn, stripConnectReturn } from './lib/connectReturn';
 import { rememberTabAfterLogin } from './lib/tabAfterLogin';
 import { JobPollError, pollFailureAction } from './lib/jobPoll';
+import { navigateBack } from './lib/backNav';
 
 // Enhanced "Encryption" using XOR + Base64 with a Salt
 // This is better than plain Base64 but still client-side.
@@ -1089,7 +1090,7 @@ function App() {
     const apply = () => {
       const hash = window.location.hash || '';
       if (!hash.startsWith('#app?')) return;
-      const params = new URLSearchParams(hash.slice(5));
+      const params = new URLSearchParams(hash.slice(hash.indexOf('?') + 1));
       const tab = params.get('tab');
       if (!tab || !DEEP_LINK_TABS.includes(tab)) return;  // e.g. #app?tutorial=1
       setActiveTab(tab);
@@ -1118,7 +1119,7 @@ function App() {
   // (cancel_url in cloud/billing.py), so the user lands on their clips again.
   useEffect(() => {
     const hash = window.location.hash || '';
-    if (!hash.startsWith('#app?') || new URLSearchParams(hash.slice(5)).get('checkout') !== 'cancel') return;
+    if (!hash.startsWith('#app?') || new URLSearchParams(hash.slice(hash.indexOf('?') + 1)).get('checkout') !== 'cancel') return;
     track('CheckoutCanceled', { props: { back_to: 'app' } });
     try { window.history.replaceState(null, '', '#app'); } catch (_) { /* ignore */ }
   }, []);
@@ -1128,7 +1129,7 @@ function App() {
   // app), then drops the query so a reload does not reopen it.
   const wantsLogin = () => {
     const hash = window.location.hash || '';
-    return hash.startsWith('#app?') && new URLSearchParams(hash.slice(5)).get('login') === '1';
+    return hash.startsWith('#app?') && new URLSearchParams(hash.slice(hash.indexOf('?') + 1)).get('login') === '1';
   };
   const [loginRequested, setLoginRequested] = useState(wantsLogin);
   useEffect(() => {
@@ -1448,7 +1449,7 @@ function App() {
     { id: 'ugc-gallery', ord: '02', icon: LayoutGrid, label: 'UGC Gallery', short: 'gallery', primary: true },
     { id: 'thumbnails', ord: '03', icon: Image, label: 'YouTube Studio', short: 'studio', primary: true },
     ...(billingEnabled && isSignedIn ? [{ id: 'history', ord: '04', icon: History, label: 'History', short: 'history' }] : []),
-    { id: 'settings', ord: '04', icon: Settings, label: 'Settings', short: 'settings' },
+    { id: 'settings', ord: '04', icon: Settings, label: 'Settings', short: 'settings', primary: true },
   ];
   const activeNav = navItems.find((n) => n.id === activeTab);
 
@@ -1461,16 +1462,33 @@ function App() {
     return () => document.removeEventListener('keydown', onKey);
   }, [navOpen]);
 
+  const tabHistoryRef = useRef([]);
+
   const goToTab = (id) => {
     if (tutorialLock && id !== 'dashboard') return;
+    if (id !== activeTab) {
+      tabHistoryRef.current.push(activeTab);
+    }
     setActiveTab(id);
     setNavOpen(false);
   };
   const tabLocked = (id) => tutorialLock && id !== 'dashboard';
 
   const handleBack = () => {
-    if (window.history.length > 1) window.history.back();
-    else window.location.hash = '';
+    if (navOpen) {
+      setNavOpen(false);
+      return;
+    }
+    if (tabHistoryRef.current.length > 0) {
+      const prevTab = tabHistoryRef.current.pop();
+      setActiveTab(prevTab);
+      return;
+    }
+    if (activeTab !== 'dashboard') {
+      setActiveTab('dashboard');
+      return;
+    }
+    navigateBack();
   };
 
   // Desktop rail: icon-only from md, labelled from lg. Below md it is gone
@@ -1579,14 +1597,13 @@ function App() {
     </div>
   );
 
-  // Bottom tab bar: the four everyday destinations plus "more" for the rest.
+  // Bottom tab bar: direct everyday destinations (clips, gallery, studio, settings).
   // It is a flex sibling of the scrolling pane rather than `fixed`, so nothing
   // ever hides behind it and no pane needs compensating padding.
   const MobileTabBar = () => {
     const tabs = navItems.filter((n) => n.primary);
-    const moreActive = !tabs.some((t) => t.id === activeTab);
     return (
-      <nav className="mobile-tab-bar md:hidden shrink-0 safe-bottom">
+      <nav aria-label="Bottom navigation" className="mobile-tab-bar md:hidden shrink-0 safe-bottom">
         <div className="flex items-stretch">
           {tabs.map((item) => {
             const NavIcon = item.icon;
@@ -1594,11 +1611,12 @@ function App() {
             return (
               <button
                 key={item.id}
+                type="button"
                 data-tutorial={item.id === 'dashboard' ? 'nav-clips' : undefined}
                 onClick={() => goToTab(item.id)}
                 disabled={tabLocked(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                title={tabLocked(item.id) ? 'Finish your first clips to unlock' : undefined}
+                title={tabLocked(item.id) ? 'Finish your first clips to unlock' : item.label}
                 className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors ${isActive ? 'text-ink' : 'text-muted active:text-ink2'} ${tabLocked(item.id) ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
                 <NavIcon size={19} className={isActive ? 'text-brass' : ''} />
@@ -1606,15 +1624,6 @@ function App() {
               </button>
             );
           })}
-          <button
-            onClick={() => setNavOpen(true)}
-            aria-label="more sections"
-            aria-expanded={navOpen}
-            className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors ${moreActive ? 'text-ink' : 'text-muted active:text-ink2'}`}
-          >
-            <Menu size={19} className={moreActive ? 'text-brass' : ''} />
-            <span className="text-[10.5px] lowercase leading-none">more</span>
-          </button>
         </div>
       </nav>
     );
@@ -1642,16 +1651,22 @@ function App() {
               <ArrowLeft size={14} />
               <span>back</span>
             </button>
-            <button
-              onClick={() => setNavOpen(true)}
-              aria-label="open navigation"
-              className="md:hidden p-2 rounded-input text-muted active:bg-paper3 transition-colors shrink-0"
-            >
-              <Menu size={20} />
-            </button>
-            <span data-tutorial="nav-clips" className="md:hidden font-display lowercase text-base text-ink truncate">
-              {activeNav?.label || 'clipper'}
-            </span>
+            {activeTab !== 'dashboard' && (
+              <>
+                {billingEnabled && (
+                  <button
+                    onClick={() => setNavOpen(true)}
+                    aria-label="open navigation"
+                    className="md:hidden p-2 rounded-input text-muted active:bg-paper3 transition-colors shrink-0"
+                  >
+                    <Menu size={20} />
+                  </button>
+                )}
+                <span data-tutorial="nav-clips" className="md:hidden font-display lowercase text-base text-ink truncate">
+                  {activeNav?.label || 'clipper'}
+                </span>
+              </>
+            )}
             {status !== 'idle' && (
               <button
                 onClick={handleReset}

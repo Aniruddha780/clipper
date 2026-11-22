@@ -12,13 +12,17 @@ import { track } from './lib/analytics'
 import { applyConsent } from './lib/consent'
 import CookieBanner from './components/CookieBanner'
 
+import { initBackTracking, navigateBack } from './lib/backNav'
+import { DEFAULT_HOME_HASH, resolveRootView, shouldDefaultToLayout } from './lib/routeResolve'
+
 const App = lazy(() => import('./App.jsx'))
 const Legal = lazy(() => import('./Legal.jsx'))
 const OAuthConsent = lazy(() => import('./components/OAuthConsent'))
 
+initBackTracking();
+
 const goBack = () => {
-  if (window.history.length > 1) window.history.back();
-  else window.location.hash = '';
+  navigateBack();
 };
 
 function PageShell({ title, children }) {
@@ -34,7 +38,7 @@ function PageShell({ title, children }) {
           >
             ← Back
           </button>
-          <a href="#app" className="font-display lowercase text-lg text-ink truncate">Clipper</a>
+          <a href="#layout" className="font-display lowercase text-xl text-ink truncate">Clipper</a>
         </div>
       </header>
       <main className="p-4 sm:p-6 md:p-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
@@ -118,31 +122,14 @@ function DeletedView() {
           You're welcome back any time — signing up again with the same address
           starts a brand-new, empty account.
         </p>
-        <a href="#landing" className="btn-ghost px-4 py-2 inline-flex">Back to Clipper</a>
+        <a href="#layout" className="btn-ghost px-4 py-2 inline-flex">Back to Clipper</a>
       </div>
     </div>
   );
 }
 
 function Root() {
-  const resolveView = () => {
-    const hash = window.location.hash || '';
-    if (hash.startsWith('#/auth/')) return 'auth';       // AuthContext consumes then redirects
-    if (hash.startsWith('#/oauth/authorize')) return 'oauth';
-    if (hash.startsWith('#/account')) return 'account';
-    if (hash.startsWith('#/deleted')) return 'deleted';
-    if (hash.startsWith('#/pricing')) return 'pricing';
-    if (hash.startsWith('#/login')) return 'login';
-    if (hash === '#legal') return 'legal';
-    // The app lives at #app (and #app?tab=… deep links). Everything else,
-    // including a bare / and the section anchors (#features, #pricing…) and
-    // #landing, is the landing page. There is deliberately no "returning
-    // visitor" shortcut into the app: the static fallback is the landing, so
-    // swapping it for the app after hydration made / jump a second after load,
-    // and the logo of every page has to reach the landing.
-    if (hash === '#app' || hash.startsWith('#app?') || hash === '#/app') return 'app';
-    return 'landing';
-  };
+  const resolveView = () => resolveRootView(window.location.hash || '');
 
   const [view, setView] = useState(resolveView);
 
@@ -173,6 +160,24 @@ function Root() {
 // Before React mounts: AuthContext rewrites the URL on auth redirects, which
 // would destroy the referrer and any UTM params we still need to read.
 captureAttribution();
+
+// Always start at /#layout on initial open or refresh rather than landing directly on #app.
+const navEntry = typeof performance !== 'undefined' && performance.getEntriesByType
+  ? performance.getEntriesByType('navigation')?.[0]
+  : null;
+if (shouldDefaultToLayout({
+  pathname: window.location.pathname,
+  hash: window.location.hash,
+  navigationType: navEntry?.type || 'navigate',
+  referrer: document.referrer,
+  origin: window.location.origin,
+})) {
+  try {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${DEFAULT_HOME_HASH}`);
+  } catch (_) {
+    window.location.hash = DEFAULT_HOME_HASH;
+  }
+}
 
 // Start whatever the visitor previously agreed to. Nothing at all on a first
 // visit: index.html only publishes the analytics initialiser, it never runs it.

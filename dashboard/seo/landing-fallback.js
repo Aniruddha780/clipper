@@ -167,7 +167,7 @@ const card = (title, body) =>
 
 export const LANDING_FALLBACK = `<div id="seo-content" style="background:#ffffff;color:#334155;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;line-height:1.65">
 <style>${NAV_CSS}</style>
-${renderNav()}
+${renderNav({ showBack: false })}
 ${NAV_SCRIPT}
 
 <section style="${S.section};padding-top:4rem"><div style="${S.wrap}">

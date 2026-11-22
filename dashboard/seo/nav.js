@@ -111,7 +111,7 @@ const BURGER = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stro
 
 /* The header markup. `signedIn` is only ever true in the React landing, which
  * knows the session; static HTML always renders the signed-out variant. */
-export function renderNav({ lang = 'en', signedIn = false, showLogin = true } = {}) {
+export function renderNav({ lang = 'en', signedIn = false, showLogin = true, showBack = true } = {}) {
   const t = NAV_STRINGS[lang] || NAV_STRINGS.en
   const groups = NAV_GROUPS.map((g) => {
     const items = g.items
@@ -124,10 +124,12 @@ export function renderNav({ lang = 'en', signedIn = false, showLogin = true } = 
   }).join('')
   const links = NAV_LINKS.map((l) => `<li class="osn-item"><a class="osn-top" href="${esc(l.href)}">${esc(pick(l.label, lang))}</a></li>`).join('')
   const login = signedIn || !showLogin ? '' : `<a class="osn-login" href="${LOGIN_HREF}">${esc(t.login)}</a>`
+  const backBtn = showBack
+    ? `  <button type="button" class="osn-back" data-osn-back aria-label="${esc(t.back)}" title="${esc(t.back)}">&larr; <span>${esc(t.back)}</span></button>\n`
+    : ''
   return `<header class="osn" data-osn>
 <div class="osn-bar">
-  <button type="button" class="osn-back" data-osn-back aria-label="${esc(t.back)}" title="${esc(t.back)}">&larr; <span>${esc(t.back)}</span></button>
-  <a class="osn-brand" href="/"><span>clipper</span></a>
+${backBtn}  <a class="osn-brand" href="/#layout"><span>clipper</span></a>
   <input type="checkbox" id="osn-toggle" class="osn-toggle" aria-label="${esc(t.menu)}">
   <label for="osn-toggle" class="osn-burger" title="${esc(t.menu)}">${BURGER}</label>
   <nav class="osn-menu" aria-label="${esc(t.main)}">
@@ -153,7 +155,7 @@ export const NAV_CSS = `
   white-space:nowrap;flex-shrink:0;transition:color .15s,border-color .15s,background .15s}
 .osn-back:hover{color:#2563eb;border-color:#2563eb;background:#f8fafc}
 .osn-back:focus-visible{outline:2px solid #2563eb;outline-offset:3px;border-radius:8px}
-.osn-brand{display:flex;align-items:center;gap:.6rem;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:1.35rem;
+.osn-brand{display:flex;align-items:center;gap:.6rem;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:1.65rem;
   letter-spacing:-.01em;color:#2563eb;text-transform:lowercase;white-space:nowrap;flex-shrink:0}
 .osn-brand img{width:28px;height:28px;display:block}
 .osn-menu{flex:1;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;min-width:0}
@@ -186,7 +188,7 @@ export const NAV_CSS = `
 @media (max-width:63.99rem){
   .osn-bar{padding:0 1rem;gap:.6rem}
   .osn-back{padding:.35rem .55rem}
-  .osn-brand{margin-right:auto;font-size:1.15rem}
+  .osn-brand{margin-right:auto;font-size:1.45rem}
   .osn-cta{order:2;padding:.45rem .85rem}
   .osn-burger{display:flex;order:3}
   .osn-menu{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;
@@ -231,8 +233,9 @@ export function wireNav(h) {
   }
   const backBtn = h.querySelector('[data-osn-back]')
   const onBack = () => {
-    if (window.history.length > 1) window.history.back()
-    else window.location.href = '/'
+    const sameOriginRef = document.referrer && document.referrer.indexOf(window.location.origin) === 0 && document.referrer !== window.location.href
+    if (sameOriginRef && window.history.length > 1) window.history.back()
+    else window.location.href = '/#layout'
   }
   if (backBtn) backBtn.addEventListener('click', onBack)
   h.addEventListener('toggle', onToggle, true)
@@ -250,7 +253,7 @@ export function wireNav(h) {
  * taken from wireNav.toString(): the build may transform that function, and the
  * inline script has to be plain ES5 that runs anywhere. No CSP is sent. */
 export const NAV_SCRIPT = `<script>(function(){var h=document.querySelector('[data-osn]');if(!h)return;
-var b=h.querySelector('[data-osn-back]');if(b)b.addEventListener('click',function(){if(window.history.length>1)window.history.back();else window.location.href='/'});
+var b=h.querySelector('[data-osn-back]');if(b)b.addEventListener('click',function(){var r=document.referrer;if(r&&r.indexOf(location.origin)===0&&r!==location.href&&window.history.length>1)window.history.back();else window.location.href='/#layout'});
 function dds(){return Array.prototype.slice.call(h.querySelectorAll('[data-osn-dd]'))}
 h.addEventListener('toggle',function(e){if(!e.target.open)return;dds().forEach(function(d){if(d!==e.target)d.open=false})},true);
 document.addEventListener('click',function(e){dds().forEach(function(d){if(d.open&&!d.contains(e.target))d.open=false})});

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, FileText, Shield, Landmark, Flag, RotateCcw } from 'lucide-react';
+import { navigateBack } from './lib/backNav';
 
 // The canonical legal documents are the static pages emitted at build time by
 // vite-plugin-seo from seo/legal.js (/terms, /privacy, /legal-notice + Spanish
@@ -49,8 +50,7 @@ const DOCS = [
 
 export default function Legal() {
     const handleBack = () => {
-        if (window.history.length > 1) window.history.back();
-        else window.location.hash = '';
+        navigateBack();
     };
 
     return (

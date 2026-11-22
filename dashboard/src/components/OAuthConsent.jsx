@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiJson } from '../lib/api';
 import { getApiUrl } from '../config';
 import LoginModal from './LoginModal';
+import { navigateBack } from '../lib/backNav';
 
 // The OAuth consent screen for MCP clients (claude.ai, ChatGPT, ...). The API
 // bounced the client's /oauth/authorize request here because only the
@@ -89,7 +90,7 @@ export default function OAuthConsent() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
       <button
         type="button"
-        onClick={() => (window.history.length > 1 ? window.history.back() : (window.location.hash = ''))}
+        onClick={navigateBack}
         aria-label="Go back"
         className="btn-quiet px-2.5 py-1.5 text-xs lowercase fixed top-4 left-4 z-20"
       >
