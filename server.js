@@ -21,9 +21,10 @@ const TMP_BASE = '/tmp/openshorts';
 const UPLOAD_DIR = path.join(TMP_BASE, 'uploads');
 const OUTPUT_DIR = path.join(TMP_BASE, 'output');
 const THUMBNAILS_DIR = path.join(OUTPUT_DIR, 'thumbnails');
+const DEMO_CACHE_DIR = path.join(TMP_BASE, 'demo');
 const GALLERY_FILE = path.join(TMP_BASE, 'gallery.json');
 
-for (const dir of [UPLOAD_DIR, OUTPUT_DIR, THUMBNAILS_DIR]) {
+for (const dir of [UPLOAD_DIR, OUTPUT_DIR, THUMBNAILS_DIR, DEMO_CACHE_DIR]) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -294,6 +295,71 @@ const DEMO_CLIPS = [
   'ep-clip-6.mp4',
 ];
 
+const DEMO_SCREEN_ALIASES = {
+  'clip-source.mp4': 'ep-source.webp',
+  'clip-vertical.mp4': 'ep-clip-1.webp',
+};
+const demoInFlight = new Map();
+
+async function ensureDemoClip(filename) {
+  const safeName = safeBasename(filename, 'ep-clip-1.mp4');
+  if (!safeName.endsWith('.mp4')) return null;
+
+  const existingStatic = path.join(DEMO_DIR, safeName);
+  if (fs.existsSync(existingStatic)) return existingStatic;
+
+  const cachedPath = path.join(DEMO_CACHE_DIR, safeName);
+  if (fs.existsSync(cachedPath)) return cachedPath;
+
+  if (demoInFlight.has(safeName)) {
+    return demoInFlight.get(safeName);
+  }
+
+  const task = (async () => {
+    const stem = safeName.replace(/\.mp4$/i, '');
+    const aliasName = DEMO_SCREEN_ALIASES[safeName];
+    const candidates = [
+      aliasName ? path.join(SCREENS_DIR, aliasName) : null,
+      path.join(SCREENS_DIR, `${stem}.webp`),
+      path.join(SCREENS_DIR, 'ep-clip-1.webp'),
+    ].filter(Boolean);
+    const screenSrc = candidates.find((p) => fs.existsSync(p));
+    if (!screenSrc) return null;
+
+    const tmpOut = path.join(DEMO_CACHE_DIR, `.tmp_${process.pid}_${Date.now()}_${safeName}`);
+    try {
+      await execFileAsync('ffmpeg', [
+        '-y',
+        '-loop', '1',
+        '-i', screenSrc,
+        '-f', 'lavfi',
+        '-i', 'anullsrc=r=44100:cl=stereo',
+        '-t', '4',
+        '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p',
+        '-c:v', 'libx264',
+        '-preset', 'ultrafast',
+        '-crf', '26',
+        '-c:a', 'aac',
+        '-b:a', '96k',
+        '-movflags', '+faststart',
+        '-shortest',
+        tmpOut,
+      ], { timeout: 30000 });
+      await fsp.rename(tmpOut, cachedPath);
+      return cachedPath;
+    } catch (err) {
+      await fsp.rm(tmpOut, { force: true }).catch(() => {});
+      console.warn('[OpenShorts] Failed to synthesize demo clip:', safeName, err?.message || err);
+      return null;
+    }
+  })().finally(() => {
+    demoInFlight.delete(safeName);
+  });
+
+  demoInFlight.set(safeName, task);
+  return task;
+}
+
 const DEMO_UGC_GALLERY = [
   {
     video_id: 'demo-ugc-1',
@@ -413,6 +479,14 @@ app.get('/thumbnails/:sessionId/:filename', (req, res) => {
   res.sendFile(target);
 });
 
+app.get('/demo/:filename', async (req, res) => {
+  const filePath = await ensureDemoClip(req.params.filename);
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(404).json({ detail: 'Demo video not found' });
+  }
+  res.sendFile(filePath);
+});
+
 // Agent uploads
 app.post('/api/uploads', (req, res) => {
   const uploadId = crypto.randomUUID();
@@ -500,12 +574,12 @@ async function runClipJob(jobId, opts) {
           );
         } catch (ffErr) {
           console.warn('[OpenShorts] ffmpeg cut failed, falling back to demo clip:', ffErr?.message);
-          const demoSrc = path.join(DEMO_DIR, DEMO_CLIPS[i % DEMO_CLIPS.length]);
-          if (fs.existsSync(demoSrc)) await fsp.copyFile(demoSrc, clipPath);
+          const demoSrc = await ensureDemoClip(DEMO_CLIPS[i % DEMO_CLIPS.length]);
+          if (demoSrc && fs.existsSync(demoSrc)) await fsp.copyFile(demoSrc, clipPath);
         }
       } else {
-        const demoSrc = path.join(DEMO_DIR, DEMO_CLIPS[i % DEMO_CLIPS.length]);
-        if (fs.existsSync(demoSrc)) {
+        const demoSrc = await ensureDemoClip(DEMO_CLIPS[i % DEMO_CLIPS.length]);
+        if (demoSrc && fs.existsSync(demoSrc)) {
           await fsp.copyFile(demoSrc, clipPath);
         }
       }
@@ -1306,6 +1380,9 @@ app.get('/api/social/user', async (req, res) => {
   }
 });
 
+app.post('/api/social/connect', (_req, res) => {
+  res.status(501).json({ detail: 'Social account connection requires an Upload-Post API key.' });
+});
 app.post('/api/social/post', (_req, res) => {
   res.status(501).json({ detail: 'Configure your Upload-Post API key to publish directly to social platforms.' });
 });
@@ -1315,6 +1392,74 @@ app.delete('/api/social/scheduled/:jobId', (_req, res) => res.json({ deleted: tr
 app.get('/api/social/analytics', (_req, res) => res.json({ analytics: {} }));
 app.get('/api/social/analytics/posts', (_req, res) => res.json({ posts: [] }));
 app.get('/api/social/analytics/impressions', (_req, res) => res.json({ impressions: [] }));
+
+// History, projects, and autopilot (local in-memory state)
+app.get('/api/history', (_req, res) => {
+  const videos = listUserCreatedVideos(200).map((v) => {
+    const idxMatch = String(v.video_id || '').match(/_(\d+)$/);
+    return {
+      ...v,
+      id: v.video_id,
+      clip_index: idxMatch ? Number(idxMatch[1]) : 0,
+      view_url: v.video_url,
+      filename: path.basename(v.video_url || ''),
+    };
+  });
+  res.json({ videos });
+});
+
+app.get('/api/projects', (_req, res) => {
+  const projects = Array.from(jobs.values())
+    .filter((job) => job.status === 'completed' && Array.isArray(job.result?.clips))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .map((job) => ({
+      job_id: job.id,
+      title: job.metadata?.source_video || job.result.clips[0]?.video_title_for_youtube_short || 'Project',
+      created_at: job.createdAt,
+      clips_count: job.result.clips.length,
+    }));
+  res.json({ projects });
+});
+
+app.get('/api/projects/:jobId', (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ detail: 'Project not found' });
+  res.json({
+    job_id: job.id,
+    status: job.status,
+    result: job.result,
+    metadata: job.metadata,
+    project_state: job.projectState || null,
+  });
+});
+
+app.put('/api/projects/:jobId/state', (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ detail: 'Project not found' });
+  job.projectState = req.body || {};
+  res.json({ ok: true });
+});
+
+app.get('/api/autopilot', (_req, res) => {
+  res.json({
+    settings: { enabled: false, platforms: [], clips_per_video: 3 },
+    youtube: null,
+    twitch: null,
+    runs: [],
+  });
+});
+
+app.put('/api/autopilot', (req, res) => {
+  res.json({ settings: { enabled: false, ...(req.body || {}) } });
+});
+
+app.get('/api/autopilot/videos', (_req, res) => {
+  res.json({ videos: [], error: null });
+});
+
+app.post('/api/autopilot/run', (_req, res) => {
+  res.status(501).json({ detail: 'Autopilot requires a connected YouTube or Twitch channel.' });
+});
 
 // Free SEO tool endpoints
 app.get('/api/tools/youtube-transcript', (_req, res) => {
@@ -1358,6 +1503,11 @@ app.post('/api/tools/youtube-metadata', async (req, res) => {
   } catch {
     return res.json({ items: [`Guide to ${topic}`] });
   }
+});
+
+// Ensure unhandled API routes always return JSON instead of falling through to SPA HTML
+app.use('/api', (_req, res) => {
+  res.status(404).json({ detail: 'Endpoint not available in self-hosted mode.' });
 });
 
 // Frontend serving: Vite middleware in dev, built static dist in production
