@@ -5,6 +5,19 @@
  */
 
 :root {
+  --tw-paper: 5 7 13;
+  --tw-paper2: 11 14 21;
+  --tw-paper3: 18 22 29;
+  --tw-ink: 240 242 246;
+  --tw-ink2: 205 209 216;
+  --tw-muted: 136 140 148;
+  --tw-brass: 255 140 63;
+  --tw-brassink: 26 11 4;
+  --tw-coral: 234 105 114;
+  --tw-ok: 121 194 137;
+  --tw-warn: 235 169 65;
+  --tw-danger: 236 91 87;
+
   /* paper */
   --color-paper: oklch(13% 0.014 265);
   --color-paper-2: oklch(16.5% 0.015 265);
@@ -50,4 +63,39 @@
   --dur-short: 220ms;
   --dur-reveal: 600ms;
   --dur-pulse: 4s;
+}
+
+.app-shell {
+  --tw-paper: 255 255 255;
+  --tw-paper2: 248 250 252;
+  --tw-paper3: 241 245 249;
+  --tw-ink: 15 23 42;
+  --tw-ink2: 51 65 85;
+  --tw-muted: 100 116 139;
+  --tw-brass: 37 99 235;
+  --tw-brassink: 255 255 255;
+  --tw-coral: 79 70 229;
+  --tw-ok: 22 163 74;
+  --tw-warn: 202 138 4;
+  --tw-danger: 220 38 38;
+
+  --color-paper: #fff;
+  --color-paper-2: #f8fafc;
+  --color-paper-3: #f1f5f9;
+  --color-ink: #0f172a;
+  --color-ink-2: #334155;
+  --color-muted: #64748b;
+  --color-rule: rgb(148 163 184 / 0.2);
+  --color-rule-2: rgb(148 163 184 / 0.35);
+  --rule-blueprint: rgb(148 163 184 / 0.12);
+  --color-accent: #2563eb;
+  --color-accent-ink: #fff;
+  --color-accent-2: #4f46e5;
+  --color-glow: rgb(37 99 235 / 0.24);
+  --color-paper-emit: rgb(37 99 235 / 0.035);
+  --color-focus: #2563eb;
+  --color-ok: #16a34a;
+  --color-danger: #dc2626;
+  --color-warn: #ca8a04;
+  color: var(--color-ink-2);
 }

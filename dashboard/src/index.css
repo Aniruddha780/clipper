@@ -50,6 +50,45 @@
 }
 
 @layer components {
+  .mobile-tab-bar {
+    margin: 0.5rem 0.75rem;
+    padding: 3px;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.9);
+    border-radius: 999px;
+    background:
+      radial-gradient(150% 200% at 50% -50%, rgb(255 255 255 / 0.98) 0%, transparent 58%),
+      linear-gradient(135deg, rgb(255 255 255 / 0.86), rgb(241 246 255 / 0.74) 48%, rgb(224 235 255 / 0.7));
+    box-shadow:
+      0 2px 6px rgb(30 41 59 / 0.07),
+      0 12px 32px rgb(30 64 175 / 0.14),
+      inset 0 1px 1px rgb(255 255 255 / 0.95),
+      inset 0 -1px 1px rgb(100 116 139 / 0.12);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    backdrop-filter: blur(28px) saturate(190%);
+  }
+
+  .mobile-tab-bar::before {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.95), transparent);
+    pointer-events: none;
+  }
+
+  .mobile-tab-bar button[aria-current='page'] {
+    border-radius: 999px;
+    background: linear-gradient(145deg, rgb(255 255 255 / 0.88), rgb(219 234 254 / 0.78));
+    box-shadow:
+      0 1px 5px rgb(30 64 175 / 0.1),
+      inset 0 1px 1px rgb(255 255 255 / 0.95);
+  }
+
   /* hairline card, lit from within — replaces every glass/surface card */
   .card,
   .glass-panel {
