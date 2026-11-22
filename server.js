@@ -1378,11 +1378,16 @@ async function start() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(DIST_DIR, { extensions: ['html'] }));
+    app.use(express.static(DIST_DIR, { extensions: ['html'], redirect: false }));
     app.use((req, res, next) => {
       if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
-      const htmlCandidate = path.join(DIST_DIR, `${req.path.replace(/^\//, '')}.html`);
-      if (fs.existsSync(htmlCandidate)) return res.sendFile(htmlCandidate);
+      const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+      if (cleanPath) {
+        const htmlCandidate = path.resolve(DIST_DIR, `${cleanPath}.html`);
+        if (htmlCandidate.startsWith(DIST_DIR + path.sep) && fs.existsSync(htmlCandidate)) {
+          return res.sendFile(htmlCandidate);
+        }
+      }
       res.sendFile(path.join(DIST_DIR, 'index.html'));
     });
   }

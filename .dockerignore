@@ -20,6 +20,8 @@ node_modules/
 remotion/node_modules/
 render-service/node_modules/
 dashboard/node_modules/
+dashboard/dist/
+.playwright-cli/
 
 # IDE
 .idea/
@@ -27,12 +29,14 @@ dashboard/node_modules/
 *.swp
 *.swo
 
-# Video files (will be mounted via volume)
+# Video files (ignore scratch/root videos, keep bundled demo clips)
 *.mp4
 *.avi
 *.mov
 *.mkv
 *.gif
+!dashboard/public/demo/
+!dashboard/public/demo/*.mp4
 videos/
 
 # Model files (downloaded at build time)
